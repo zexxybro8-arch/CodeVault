@@ -70,37 +70,49 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
     );
 
     const stock = availableCodes.length;
+    const denConfig = denominations.find(d => 
+      (d.categoryName || 'GOOGLE PLAY').trim().toUpperCase() === item.category &&
+      parseNumeric(d.value) === item.denomination
+    );
+    const prodName = denConfig?.name || 'Google Play Recharge Code';
+    const prodEnabled = denConfig ? denConfig.enabled !== false : true;
 
     if (stock > 0) {
       const firstCode = availableCodes[0];
+      const prodPrice = parseNumeric(firstCode.price, denConfig?.price !== undefined ? parseNumeric(denConfig.price) : item.denomination);
+      const prodBalance = parseNumeric(firstCode.balance, denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : item.denomination);
+
       products.push({
         id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
-        name: 'Google Play Recharge Code',
+        name: prodName,
         category: item.category,
         denomination: item.denomination,
-        price: parseNumeric(firstCode.price, item.denomination),
-        balance: parseNumeric(firstCode.balance, item.denomination),
+        price: prodPrice,
+        balance: prodBalance,
         maskedCode: formatMaskedCode(firstCode.code || (firstCode as any).redeemCode || ''),
         fullCode: firstCode.code || (firstCode as any).redeemCode || '',
         deliveryStatus: 'Instant',
         stock: stock,
-        enabled: true,
+        enabled: prodEnabled,
         displayOrder: item.displayOrder,
         createdAt: firstCode.createdAt
       });
     } else {
       // OUT OF STOCK Product Card
+      const outPrice = denConfig?.price !== undefined ? parseNumeric(denConfig.price) : item.denomination;
+      const outBalance = denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : item.denomination;
+
       products.push({
         id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
-        name: 'Google Play Recharge Code',
+        name: prodName,
         category: item.category,
         denomination: item.denomination,
-        price: item.denomination,
-        balance: item.denomination,
+        price: outPrice,
+        balance: outBalance,
         maskedCode: '•••• •••• OUT OF STOCK',
         deliveryStatus: 'Instant',
         stock: 0,
-        enabled: true,
+        enabled: prodEnabled,
         displayOrder: item.displayOrder,
         createdAt: new Date().toISOString()
       });
@@ -140,12 +152,19 @@ function buildUserProductCards(denominations: Denomination[], redeemCodes: Redee
     const cat = rawCat.toUpperCase();
 
     const denom = parseNumeric(c.denomination, 0);
-    const price = parseNumeric(c.price, denom);
-    const balance = parseNumeric(c.balance, price || denom);
+    const denConfig = denominations.find(d => 
+      (d.categoryName || 'GOOGLE PLAY').trim().toUpperCase() === cat &&
+      parseNumeric(d.value) === denom
+    );
+
+    const price = parseNumeric(c.price, denConfig?.price !== undefined ? parseNumeric(denConfig.price) : denom);
+    const balance = parseNumeric(c.balance, denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : (price || denom));
+    const name = denConfig?.name || 'Google Play Recharge Code';
+    const enabled = denConfig ? denConfig.enabled !== false : true;
 
     userProducts.push({
       id: c.id, // Exact unique database ID of that code
-      name: 'Google Play Recharge Code',
+      name: name,
       category: cat,
       denomination: denom,
       price: price,
@@ -154,8 +173,8 @@ function buildUserProductCards(denominations: Denomination[], redeemCodes: Redee
       fullCode: rawCode,
       deliveryStatus: 'Instant',
       stock: 1, // Exactly 1 for each individual code card
-      enabled: true,
-      displayOrder: (c as any).displayOrder || 1,
+      enabled: enabled,
+      displayOrder: (c as any).displayOrder || denConfig?.displayOrder || 1,
       createdAt: c.createdAt || new Date().toISOString()
     });
   }
@@ -175,13 +194,17 @@ function buildUserProductCards(denominations: Denomination[], redeemCodes: Redee
       const key = `${denCat}_${denVal}`;
 
       if (denVal > 0 && !availableKeys.has(key) && !availablePriceKeys.has(key)) {
+        const outPrice = den.price !== undefined ? parseNumeric(den.price) : denVal;
+        const outBalance = den.balance !== undefined ? parseNumeric(den.balance) : denVal;
+        const outName = den.name || 'Google Play Recharge Code';
+
         userProducts.push({
           id: `prod-out-${denCat.toLowerCase()}-${denVal}`,
-          name: 'Google Play Recharge Code',
+          name: outName,
           category: denCat,
           denomination: denVal,
-          price: denVal,
-          balance: denVal,
+          price: outPrice,
+          balance: outBalance,
           maskedCode: '•••• •••• OUT OF STOCK',
           deliveryStatus: 'Instant',
           stock: 0,
@@ -414,16 +437,79 @@ export const api = {
   // Fetch Products (returns all configured products including OUT OF STOCK ones)
   async getProducts(options?: { forAdmin?: boolean }): Promise<Product[]> {
     const db = getDB();
-    const token = this.getAdminToken();
-    const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
-
-    const isForAdmin = options?.forAdmin === true || (isAdmin && options?.forAdmin !== false);
-
-    if (isForAdmin) {
-      return db.products;
+    if (options?.forAdmin) {
+      return buildProductsFromDB(db.denominations, db.redeemCodes);
     } else {
       return buildUserProductCards(db.denominations, db.redeemCodes);
     }
+  },
+
+  // Update Product (Denomination / Pricing / Balance Configuration)
+  async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+    const db = getDB();
+
+    // 1. Find matching denomination configuration
+    let targetDenom = db.denominations.find(d =>
+      d.id === id ||
+      `prod-${(d.categoryName || 'google play').toLowerCase()}-${d.value}` === id ||
+      `prod-out-${(d.categoryName || 'google play').toLowerCase()}-${d.value}` === id
+    );
+
+    const oldDenomVal = updates.denomination !== undefined ? parseNumeric(updates.denomination) : (targetDenom ? targetDenom.value : 0);
+    const newPrice = updates.price !== undefined ? parseNumeric(updates.price) : (targetDenom?.price || oldDenomVal);
+    const newBalance = updates.balance !== undefined ? parseNumeric(updates.balance) : (targetDenom?.balance || newPrice || oldDenomVal);
+    const newName = updates.name ? updates.name.trim() : (targetDenom?.name || 'Google Play Recharge Code');
+    const newCategory = updates.category ? updates.category.trim().toUpperCase() : (targetDenom?.categoryName || 'GOOGLE PLAY');
+    const newEnabled = updates.enabled !== undefined ? Boolean(updates.enabled) : (targetDenom ? targetDenom.enabled !== false : true);
+
+    if (targetDenom) {
+      targetDenom.value = oldDenomVal || targetDenom.value;
+      targetDenom.label = `₹${targetDenom.value}`;
+      targetDenom.categoryName = newCategory;
+      targetDenom.price = newPrice;
+      targetDenom.balance = newBalance;
+      targetDenom.name = newName;
+      targetDenom.enabled = newEnabled;
+    } else {
+      const newDen: Denomination = {
+        id: `den-${Date.now()}`,
+        categoryId: 'cat-1',
+        categoryName: newCategory,
+        value: oldDenomVal,
+        label: `₹${oldDenomVal}`,
+        price: newPrice,
+        balance: newBalance,
+        name: newName,
+        enabled: newEnabled,
+        displayOrder: db.denominations.length + 1
+      };
+      db.denominations.push(newDen);
+      targetDenom = newDen;
+    }
+
+    // 2. Also update associated available redeem codes for this category & denomination
+    for (const c of db.redeemCodes) {
+      const codeCat = (c.category || 'GOOGLE PLAY').trim().toUpperCase();
+      const codeDenom = parseNumeric(c.denomination);
+
+      const isMatch = (c.id === id) || (isAvailableStatus(c.status) && codeCat === newCategory && codeDenom === oldDenomVal);
+      if (isMatch) {
+        c.category = newCategory;
+        if (updates.denomination !== undefined) c.denomination = oldDenomVal;
+        if (updates.price !== undefined) c.price = newPrice;
+        if (updates.balance !== undefined) c.balance = newBalance;
+      }
+    }
+
+    saveDB(db);
+
+    const freshProducts = buildProductsFromDB(db.denominations, db.redeemCodes);
+    const updatedProd = freshProducts.find(p =>
+      p.id === id ||
+      (p.category.toUpperCase() === newCategory && p.denomination === oldDenomVal)
+    );
+
+    return updatedProd || freshProducts[0] || null;
   },
 
   // Get Categories

@@ -14,6 +14,9 @@ export interface Denomination {
   categoryId: string;
   categoryName: string;
   value: number; // e.g. 500
+  price?: number; // e.g. 450
+  balance?: number; // e.g. 500
+  name?: string; // e.g. "Google Play Recharge Code"
   label: string; // e.g. "₹500"
   enabled: boolean;
   displayOrder: number;
@@ -85,12 +88,6 @@ export interface Customer {
   totalOrders: number;
   totalSpent: number;
   lastOrderDate: string;
-}
-
-export interface CustomerSession {
-  name: string;
-  email: string;
-  phone?: string;
 }
 
 export interface DashboardStats {
