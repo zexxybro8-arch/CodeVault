@@ -112,5 +112,5 @@ export interface MarketplaceSettings {
   currency: string;
   maintenanceMode: boolean;
   defaultAvailability: boolean;
-  adminPin: string;
+  adminPin?: string;
 }
