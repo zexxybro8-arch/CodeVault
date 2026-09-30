@@ -1,9 +1,9 @@
-import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings, UserSession } from '../types';
+import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, CustomerSession, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings } from '../types';
 
 const ADMIN_TOKEN_KEY = 'codevault_admin_token';
 const DB_STORAGE_KEY = 'codevault_database_v1';
-const USER_TOKEN_KEY = 'codevault_user_token';
-const USER_SESSION_KEY = 'codevault_user_session';
+const CUSTOMER_SESSION_KEY = 'codevault_customer_session';
+const CUSTOMER_LOGGED_OUT_KEY = 'codevault_customer_logged_out';
 
 interface DatabaseSchema {
   categories: Category[];
@@ -246,67 +246,42 @@ export const api = {
     localStorage.removeItem('blackx_admin_token');
   },
 
-  // Normal User Token & Session
-  getUserToken(): string | null {
-    return localStorage.getItem(USER_TOKEN_KEY) || localStorage.getItem('blackx_user_token');
-  },
-  getUserSession(): UserSession | null {
+  // Customer Session & Authentication
+  getCustomerSession(): CustomerSession | null {
     try {
-      const raw = localStorage.getItem(USER_SESSION_KEY) || localStorage.getItem('blackx_user_session');
+      const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
       if (raw) {
-        return JSON.parse(raw) as UserSession;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.email) return parsed;
       }
     } catch (e) {
-      console.error('Error reading user session', e);
+      console.error('Error reading customer session', e);
     }
+
+    // Check if customer explicitly clicked log out
+    const isLoggedOut = localStorage.getItem(CUSTOMER_LOGGED_OUT_KEY);
+    if (!isLoggedOut) {
+      // Default initialized active session for demo customer
+      const defaultCustomer: CustomerSession = {
+        name: 'Alex Mercer',
+        email: 'alex.mercer@example.com',
+        phone: '+91 98765 43210'
+      };
+      localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(defaultCustomer));
+      return defaultCustomer;
+    }
+
     return null;
   },
-  setUserSession(user: UserSession): void {
-    const token = user.token || `codevault_user_token_${Date.now()}`;
-    const sessionData: UserSession = { ...user, token };
-    localStorage.setItem(USER_TOKEN_KEY, token);
-    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionData));
+
+  setCustomerSession(customer: CustomerSession): void {
+    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customer));
+    localStorage.removeItem(CUSTOMER_LOGGED_OUT_KEY);
   },
-  async userLogin(emailOrPhone: string, _password?: string): Promise<{ success: boolean; user?: UserSession; message?: string }> {
-    const cleanInput = String(emailOrPhone || '').trim();
-    if (!cleanInput) {
-      return { success: false, message: 'Please enter your email or phone number.' };
-    }
 
-    const db = getDB();
-    const existingOrder = db.orders.find(
-      o => o.customerEmail.toLowerCase() === cleanInput.toLowerCase() || o.customerPhone === cleanInput
-    );
-
-    const name = existingOrder
-      ? existingOrder.customerName
-      : (cleanInput.includes('@') ? cleanInput.split('@')[0] : 'Customer');
-    const email = cleanInput.includes('@')
-      ? cleanInput.toLowerCase()
-      : `${cleanInput.replace(/[^0-9]/g, '')}@codevault.local`;
-    const phone = existingOrder ? existingOrder.customerPhone : (cleanInput.includes('@') ? '+91 98765 43210' : cleanInput);
-
-    const user: UserSession = {
-      id: `usr-${Date.now()}`,
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      email,
-      phone,
-      token: `codevault_user_token_${Date.now()}`
-    };
-
-    this.setUserSession(user);
-    return { success: true, user };
-  },
-  userLogout(): void {
-    localStorage.removeItem(USER_TOKEN_KEY);
-    localStorage.removeItem(USER_SESSION_KEY);
-    localStorage.removeItem('blackx_user_token');
-    localStorage.removeItem('blackx_user_session');
-    try {
-      sessionStorage.clear();
-    } catch (e) {
-      console.error('Error clearing sessionStorage', e);
-    }
+  customerLogout(): void {
+    localStorage.removeItem(CUSTOMER_SESSION_KEY);
+    localStorage.setItem(CUSTOMER_LOGGED_OUT_KEY, 'true');
   },
 
   // Direct DB Admin Auth Login
@@ -661,6 +636,12 @@ export const api = {
 
     db.orders.unshift(newOrder);
     saveDB(db);
+
+    this.setCustomerSession({
+      name: customerName,
+      email: customerEmail.toLowerCase().trim(),
+      phone: customerPhone
+    });
 
     return newOrder;
   },

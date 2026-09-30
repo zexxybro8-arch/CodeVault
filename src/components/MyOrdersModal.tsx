@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Order, OrderStatus } from '../types';
+import { Order, OrderStatus, CustomerSession } from '../types';
 import { api } from '../services/api';
-import { X, Search, ShoppingBag, Copy, Check, ShieldCheck, RefreshCw, Loader2, Ticket } from 'lucide-react';
+import { X, Search, ShoppingBag, Copy, Check, ShieldCheck, RefreshCw, Loader2, Ticket, LogOut, User } from 'lucide-react';
 
 interface MyOrdersModalProps {
   onClose: () => void;
   recentOrders?: Order[];
+  customerSession?: CustomerSession | null;
+  onCustomerLogout?: () => void;
+  onCustomerLogin?: () => void;
 }
 
-export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ onClose, recentOrders = [] }) => {
+export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
+  onClose,
+  recentOrders = [],
+  customerSession = null,
+  onCustomerLogout,
+  onCustomerLogin
+}) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | OrderStatus>('All');
   const [orders, setOrders] = useState<Order[]>(recentOrders);
@@ -24,6 +33,8 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ onClose, recentOrd
         res = await api.getOrders({ email: q });
       } else if (q.startsWith('CV-') || q.startsWith('BX-') || q.length >= 4) {
         res = await api.getOrders({ orderId: q });
+      } else if (customerSession?.email) {
+        res = await api.getOrders({ email: customerSession.email });
       } else {
         res = await api.getOrders();
       }
@@ -34,6 +45,10 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ onClose, recentOrd
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUserOrders();
+  }, [customerSession]);
 
   useEffect(() => {
     if (searchQuery.trim().length >= 3) {
@@ -98,12 +113,43 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({ onClose, recentOrd
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {customerSession ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span className="font-extrabold truncate max-w-[120px]">{customerSession.name.split(' ')[0]}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    onCustomerLogout?.();
+                  }}
+                  title="Log out of customer account"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-extrabold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-xl border border-rose-200 hover:border-rose-600 transition-colors shadow-2xs"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="text-xs">Log Out</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  onCustomerLogin?.();
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-extrabold text-blue-600 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-xl border border-blue-200 hover:border-blue-600 transition-colors shadow-2xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="text-xs">Sign In</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Filter Bar */}

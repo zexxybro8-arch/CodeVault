@@ -87,6 +87,12 @@ export interface Customer {
   lastOrderDate: string;
 }
 
+export interface CustomerSession {
+  name: string;
+  email: string;
+  phone?: string;
+}
+
 export interface DashboardStats {
   totalCategories: number;
   totalSubCategories: number;
@@ -113,12 +119,4 @@ export interface MarketplaceSettings {
   maintenanceMode: boolean;
   defaultAvailability: boolean;
   adminPin?: string;
-}
-
-export interface UserSession {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  token?: string;
 }
