@@ -287,11 +287,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   const handleBulkImport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bulkText.trim()) return;
-    const res = await api.bulkImportRedeemCodes(bulkText);
-    setBulkResult({ imported: res.imported, failed: res.failed, errors: res.errors || [] });
-    if (res.imported > 0) {
-      loadAdminData();
-      onDataChanged();
+    setIsLoading(true);
+    try {
+      const res = await api.bulkImportRedeemCodes(bulkText);
+      setBulkResult({ imported: res.imported, failed: res.failed, errors: res.errors || [] });
+      if (res.imported > 0) {
+        setBulkText('');
+        setShowBulkModal(false);
+        await loadAdminData();
+        onDataChanged();
+        if (res.failed > 0) {
+          showToast('success', `${res.imported} codes imported successfully. ${res.failed} codes failed.`);
+        } else {
+          showToast('success', `${res.imported} codes imported successfully.`);
+        }
+      } else {
+        showToast('error', `Failed to import codes. ${res.errors?.[0] || 'Please verify code format.'}`);
+      }
+    } catch (err: any) {
+      console.error('Error in bulk import', err);
+      showToast('error', 'Failed to process bulk import. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

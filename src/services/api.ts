@@ -623,49 +623,73 @@ export const api = {
     let failedCount = 0;
     const errors: string[] = [];
 
-    const existingCodes = new Set(db.redeemCodes.map(c => c.code.toUpperCase()));
+    const existingCodes = new Set(db.redeemCodes.map(c => c.code.trim().toUpperCase()));
 
+    let rowIndex = 0;
     for (const line of lines) {
-      const parts = line.split(/[|,\t]/).map(p => p.trim());
-      if (parts.length < 1) continue;
+      rowIndex++;
+      
+      // Parse by pipe '|' separator (or tab/comma fallback)
+      let parts: string[] = [];
+      if (line.includes('|')) {
+        parts = line.split('|').map(p => p.trim());
+      } else if (line.includes('\t')) {
+        parts = line.split('\t').map(p => p.trim());
+      } else if (line.includes(',')) {
+        parts = line.split(',').map(p => p.trim());
+      } else {
+        parts = [line.trim()];
+      }
 
-      const code = parts[0]?.toUpperCase();
-      if (!code) {
-        failedCount++;
-        errors.push(`Empty code on line "${line}"`);
+      if (parts.length === 0 || !parts[0]) {
         continue;
       }
 
-      if (existingCodes.has(code)) {
+      const cleanCode = parts[0].trim().toUpperCase();
+      if (!cleanCode) {
         failedCount++;
-        errors.push(`Duplicate code "${code}" skipped`);
+        errors.push(`Row ${rowIndex}: Empty code`);
         continue;
       }
 
-      const category = parts[1] ? parts[1].toUpperCase() : 'GOOGLE PLAY';
-      const denom = parts[2] ? Number(parts[2].replace(/[^0-9]/g, '')) : 500;
-      const price = parts[3] ? Number(parts[3].replace(/[^0-9]/g, '')) : (denom || 500);
-      const balance = parts[4] ? Number(parts[4].replace(/[^0-9]/g, '')) : (denom || 500);
+      if (existingCodes.has(cleanCode)) {
+        failedCount++;
+        errors.push(`Row ${rowIndex}: Duplicate code "${cleanCode}" skipped`);
+        continue;
+      }
+
+      const cleanCategory = parts[1] ? parts[1].trim().toUpperCase() : 'GOOGLE PLAY';
+
+      // Parse denomination, price, and balance
+      // Format: CODE | CATEGORY | DENOMINATION | PRICE | BALANCE
+      const rawDenom = parts[2] !== undefined ? parts[2] : '';
+      const rawPrice = parts[3] !== undefined ? parts[3] : '';
+      const rawBalance = parts[4] !== undefined ? parts[4] : '';
+
+      const parsedDenom = rawDenom ? parseNumeric(rawDenom, 0) : 500;
+      const parsedPrice = rawPrice ? parseNumeric(rawPrice, parsedDenom) : parsedDenom;
+      const parsedBalance = rawBalance ? parseNumeric(rawBalance, parsedPrice || parsedDenom) : (parsedPrice || parsedDenom);
 
       const newItem: RedeemCodeItem = {
-        id: `code-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        code,
-        category,
-        denomination: denom || 500,
-        price: price || 500,
-        balance: balance || 500,
+        id: `code-${Date.now()}-${rowIndex}-${Math.floor(100000 + Math.random() * 900000)}`,
+        code: cleanCode,
+        category: cleanCategory || 'GOOGLE PLAY',
+        denomination: parsedDenom || 500,
+        price: parsedPrice || 500,
+        balance: parsedBalance || 500,
         status: 'Available',
+        note: `Bulk imported on ${new Date().toLocaleDateString()}`,
         createdAt: new Date().toISOString()
       };
 
       db.redeemCodes.unshift(newItem);
-      existingCodes.add(code);
+      existingCodes.add(cleanCode);
       successCount++;
     }
 
     saveDB(db);
     return {
-      success: true,
+      success: successCount > 0,
       imported: successCount,
       failed: failedCount,
       errors: errors.slice(0, 10)
