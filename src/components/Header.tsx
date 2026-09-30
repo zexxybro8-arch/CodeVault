@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ShoppingBag, Settings, Menu, X, Tag, KeyRound } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ShoppingBag, Menu, X, Tag } from 'lucide-react';
 
 interface HeaderProps {
   orderCount: number;
@@ -17,6 +17,25 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateMarketplace
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Discreet 3-tap counter on logo badge for authenticated admin access
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleLogoTap = () => {
+    clickCountRef.current += 1;
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+    if (clickCountRef.current >= 3) {
+      clickCountRef.current = 0;
+      onOpenAdmin();
+    } else {
+      clickTimerRef.current = setTimeout(() => {
+        clickCountRef.current = 0;
+      }, 1500);
+      onNavigateMarketplace();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs max-w-full overflow-x-hidden">
@@ -25,8 +44,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Left: Brand Logo & Subtitle */}
         <div className="flex items-center gap-4 sm:gap-8">
           <button 
-            onClick={onNavigateMarketplace}
+            onClick={handleLogoTap}
             className="flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-0.5 group"
+            title="Code Vault"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-xs group-hover:bg-blue-700 transition-colors shrink-0 tracking-tighter">
               CV
@@ -66,12 +86,12 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-2">
           
           {/* MY ORDERS Button */}
           <button
             onClick={onOpenMyOrders}
-            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
+            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
           >
             <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span className="text-xs sm:text-sm">MY ORDERS</span>
@@ -80,15 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
                 {orderCount}
               </span>
             )}
-          </button>
-
-          {/* Settings / Admin Icon */}
-          <button
-            onClick={onOpenAdmin}
-            title="Admin Console"
-            className="p-2 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
-          >
-            <Settings className="w-4 h-4" />
           </button>
 
           {/* Mobile Hamburger Menu */}
@@ -103,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Menu Drawer (Pure User Navigation - Admin link completely hidden) */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-2 shadow-lg animate-fadeIn max-w-full">
           <button
@@ -131,16 +142,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Tag className="w-4 h-4" />
             Redeem Code
-          </button>
-          <button
-            onClick={() => {
-              onOpenAdmin();
-              setMobileMenuOpen(false);
-            }}
-            className="flex items-center gap-2 w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px]"
-          >
-            <KeyRound className="w-4 h-4 text-slate-500" />
-            Admin Dashboard
           </button>
         </div>
       )}

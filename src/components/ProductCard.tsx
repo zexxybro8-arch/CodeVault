@@ -10,17 +10,20 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) => {
   const [copied, setCopied] = useState(false);
-  const isOutOfStock = product.stock <= 0;
+  const isOutOfStock = (product.stock ?? 0) <= 0;
   const codeBalance = product.balance !== undefined ? product.balance : product.price;
 
   const handleCopyMaskedCode = () => {
+    if (isOutOfStock) return;
     navigator.clipboard.writeText(product.maskedCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-300 transition-all duration-300 p-4 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5 w-full max-w-full">
+    <div className={`group bg-white rounded-2xl border transition-all duration-300 p-4 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5 w-full max-w-full ${
+      isOutOfStock ? 'border-slate-200/80 bg-slate-50/40 opacity-95' : 'border-slate-200/90 shadow-xs hover:shadow-md hover:border-blue-300'
+    }`}>
       
       {/* TOP SECTION */}
       <div className="space-y-2">
@@ -32,16 +35,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) =
             </span>
           </div>
 
-          {/* Stock Badge */}
+          {/* Real Stock Status Badge */}
           {!isOutOfStock ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              Available ({product.stock})
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-300 shadow-2xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              AVAILABLE ({product.stock})
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200">
-              <AlertCircle className="w-3.5 h-3.5" />
-              Out of Stock
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black text-rose-700 bg-rose-50 border border-rose-300 shadow-2xs">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+              OUT OF STOCK
             </span>
           )}
         </div>
@@ -58,18 +61,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) =
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
             DIGITAL CODE (MASKED)
           </span>
-          <div className="font-mono font-black text-slate-900 text-base sm:text-xl tracking-wider sm:tracking-widest mt-0.5">
+          <div className={`font-mono font-black text-base sm:text-xl tracking-wider sm:tracking-widest mt-0.5 ${
+            isOutOfStock ? 'text-slate-400 italic' : 'text-slate-900'
+          }`}>
             {product.maskedCode}
           </div>
         </div>
 
-        <button
-          onClick={handleCopyMaskedCode}
-          title="Copy masked preview"
-          className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
-        >
-          {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-        </button>
+        {!isOutOfStock && (
+          <button
+            onClick={handleCopyMaskedCode}
+            title="Copy masked preview"
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+          </button>
+        )}
       </div>
 
       {/* PRICE + BALANCE + REDEEM ACTION */}
@@ -100,18 +107,18 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) =
 
         </div>
 
-        {/* RIGHT SIDE: LARGE BLUE BUTTON */}
+        {/* RIGHT SIDE: REDEEM NOW or OUT OF STOCK BUTTON */}
         <button
           onClick={() => onBuyNow(product)}
           disabled={isOutOfStock}
-          className={`w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs shrink-0 min-h-[44px] ${
+          className={`w-full sm:w-auto px-6 py-3 rounded-xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shrink-0 min-h-[44px] ${
             isOutOfStock
-              ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white hover:shadow-md'
+              ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'
+              : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-xs hover:shadow-md'
           }`}
         >
-          <span>REDEEM NOW</span>
-          <ArrowRight className="w-4 h-4" />
+          <span>{isOutOfStock ? 'OUT OF STOCK' : 'REDEEM NOW'}</span>
+          {!isOutOfStock && <ArrowRight className="w-4 h-4" />}
         </button>
 
       </div>
@@ -124,7 +131,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) =
         </span>
         <span className="inline-flex items-center gap-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-          <span>100% Verified Code</span>
+          <span>{isOutOfStock ? 'Stock Depleted' : '100% Verified Code'}</span>
         </span>
       </div>
 

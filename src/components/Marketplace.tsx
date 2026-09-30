@@ -37,21 +37,21 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     return Array.from(new Set(['ALL', ...cats]));
   }, [categories]);
 
-  // Denomination Options
+  // Denomination Options (Standard Google Play amounts + DB denominations)
   const denominationOptions = useMemo(() => {
-    const defaultVals = [120, 150, 200, 300, 350, 500, 700, 900];
+    const defaultVals = [120, 150, 200, 300, 350, 500, 700, 900, 1000, 3000, 5000, 6000];
     const dbVals = denominations.map(d => d.value);
     const combinedVals = Array.from(new Set([...defaultVals, ...dbVals])).sort((a, b) => a - b);
     return [
       { label: 'ALL VALUES', value: null },
-      ...combinedVals.map(v => ({ label: `₹${v}`, value: v }))
+      ...combinedVals.map(v => ({ label: `₹${v.toLocaleString('en-IN')}`, value: v }))
     ];
   }, [denominations]);
 
   // Handle Category Change
   const handleCategorySelect = (cat: string) => {
     setSelectedCategory(cat);
-    if (cat !== 'GOOGLE PLAY') {
+    if (cat !== 'GOOGLE PLAY' && cat !== 'ALL') {
       setSelectedDenomination(null);
     }
   };
@@ -64,7 +64,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         return false;
       }
       // Denomination / Value filter
-      if (selectedCategory === 'GOOGLE PLAY' && selectedDenomination !== null) {
+      if (selectedDenomination !== null) {
         if (p.price !== selectedDenomination && p.denomination !== selectedDenomination) {
           return false;
         }
@@ -76,14 +76,15 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         const matchCat = p.category.toLowerCase().includes(query);
         const matchDesc = p.description?.toLowerCase().includes(query);
         const matchPrice = p.price.toString().includes(query);
-        if (!matchName && !matchCat && !matchDesc && !matchPrice) return false;
+        const matchDenom = p.denomination?.toString().includes(query);
+        if (!matchName && !matchCat && !matchDesc && !matchPrice && !matchDenom) return false;
       }
       return true;
     }).sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'newest') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      return 0;
+      return (a.denomination || 0) - (b.denomination || 0);
     });
   }, [products, searchQuery, selectedCategory, selectedDenomination, sortBy]);
 
@@ -159,33 +160,31 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
           </div>
 
           {/* SECOND-LEVEL DENOMINATION / VALUE FILTER */}
-          {(selectedCategory === 'GOOGLE PLAY' || selectedCategory === 'ALL') && (
-            <div className="pt-1 animate-fadeIn space-y-2">
-              <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">
-                <Filter className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span>Select Recharge Amount / Denomination:</span>
-              </div>
-
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-                {denominationOptions.map(denom => {
-                  const isSelected = selectedDenomination === denom.value;
-                  return (
-                    <button
-                      key={denom.label}
-                      onClick={() => setSelectedDenomination(denom.value)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-extrabold transition-all whitespace-nowrap shrink-0 min-h-[36px] ${
-                        isSelected
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
-                      }`}
-                    >
-                      {denom.label}
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="pt-1 animate-fadeIn space-y-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">
+              <Filter className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>Select Recharge Amount / Denomination:</span>
             </div>
-          )}
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {denominationOptions.map(denom => {
+                const isSelected = selectedDenomination === denom.value;
+                return (
+                  <button
+                    key={denom.label}
+                    onClick={() => setSelectedDenomination(denom.value)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-extrabold transition-all whitespace-nowrap shrink-0 min-h-[36px] ${
+                      isSelected
+                        ? 'bg-blue-600 text-white shadow-2xs'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                    }`}
+                  >
+                    {denom.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
         </div>
 
@@ -218,14 +217,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               <Sparkles className="w-6 h-6" />
             </div>
             <h3 className="text-base sm:text-lg font-bold text-slate-900">
-              {selectedDenomination
-                ? `No products available for ₹${selectedDenomination}`
-                : 'No Google Play codes matched your search'}
+              No products found
             </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto font-medium">
-              {selectedDenomination
-                ? `There are currently no active vouchers for ₹${selectedDenomination}. Please try another denomination.`
-                : 'Try resetting your search query or switching category filters.'}
+              Try resetting your search query or switching category filters.
             </p>
             <button
               onClick={() => {

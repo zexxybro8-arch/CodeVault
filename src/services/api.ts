@@ -25,22 +25,82 @@ function formatMaskedCode(fullCode: string): string {
   return `•••• •••• ${part1} ${part2}`;
 }
 
-function buildProductsFromCodes(redeemCodes: RedeemCodeItem[]): Product[] {
-  const activeCodes = redeemCodes.filter(c => c.status === 'Available');
-  return activeCodes.map((codeItem) => ({
-    id: `prod-${codeItem.id}`,
-    name: 'Google Play Recharge Code',
-    category: codeItem.category,
-    denomination: codeItem.denomination,
-    price: codeItem.price,
-    balance: codeItem.balance,
-    maskedCode: formatMaskedCode(codeItem.code),
-    fullCode: codeItem.code,
-    deliveryStatus: 'Instant',
-    stock: 1,
-    enabled: true,
-    createdAt: codeItem.createdAt
-  }));
+function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemCodeItem[]): Product[] {
+  const denMap = new Map<string, { category: string; denomination: number; displayOrder: number }>();
+
+  // Include configured denominations
+  for (const den of denominations) {
+    if (den.enabled !== false) {
+      const key = `${den.categoryName.toUpperCase()}_${den.value}`;
+      denMap.set(key, {
+        category: den.categoryName.toUpperCase(),
+        denomination: den.value,
+        displayOrder: den.displayOrder || 99
+      });
+    }
+  }
+
+  // Include any extra denominations from redeemCodes
+  for (const codeItem of redeemCodes) {
+    const key = `${codeItem.category.toUpperCase()}_${codeItem.denomination}`;
+    if (!denMap.has(key)) {
+      denMap.set(key, {
+        category: codeItem.category.toUpperCase(),
+        denomination: codeItem.denomination,
+        displayOrder: 99
+      });
+    }
+  }
+
+  const products: Product[] = [];
+
+  for (const [key, item] of denMap.entries()) {
+    // Strictly count AVAILABLE codes
+    const availableCodes = redeemCodes.filter(
+      c => c.status === 'Available' &&
+           c.category.toUpperCase() === item.category &&
+           c.denomination === item.denomination
+    );
+
+    const stock = availableCodes.length;
+
+    if (stock > 0) {
+      const firstCode = availableCodes[0];
+      products.push({
+        id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
+        name: 'Google Play Recharge Code',
+        category: item.category,
+        denomination: item.denomination,
+        price: firstCode.price,
+        balance: firstCode.balance,
+        maskedCode: formatMaskedCode(firstCode.code),
+        fullCode: firstCode.code,
+        deliveryStatus: 'Instant',
+        stock: stock,
+        enabled: true,
+        displayOrder: item.displayOrder,
+        createdAt: firstCode.createdAt
+      });
+    } else {
+      // OUT OF STOCK Product Card
+      products.push({
+        id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
+        name: 'Google Play Recharge Code',
+        category: item.category,
+        denomination: item.denomination,
+        price: item.denomination,
+        balance: item.denomination,
+        maskedCode: '•••• •••• OUT OF STOCK',
+        deliveryStatus: 'Instant',
+        stock: 0,
+        enabled: true,
+        displayOrder: item.displayOrder,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+
+  return products.sort((a, b) => (a.denomination || 0) - (b.denomination || 0));
 }
 
 const INITIAL_CATEGORIES: Category[] = [
@@ -55,7 +115,11 @@ const INITIAL_DENOMINATIONS: Denomination[] = [
   { id: 'den-350', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 350, label: '₹350', enabled: true, displayOrder: 5 },
   { id: 'den-500', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 500, label: '₹500', enabled: true, displayOrder: 6 },
   { id: 'den-700', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 700, label: '₹700', enabled: true, displayOrder: 7 },
-  { id: 'den-900', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 900, label: '₹900', enabled: true, displayOrder: 8 }
+  { id: 'den-900', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 900, label: '₹900', enabled: true, displayOrder: 8 },
+  { id: 'den-1000', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 1000, label: '₹1,000', enabled: true, displayOrder: 9 },
+  { id: 'den-3000', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 3000, label: '₹3,000', enabled: true, displayOrder: 10 },
+  { id: 'den-5000', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 5000, label: '₹5,000', enabled: true, displayOrder: 11 },
+  { id: 'den-6000', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 6000, label: '₹6,000', enabled: true, displayOrder: 12 }
 ];
 
 const INITIAL_REDEEM_CODES: RedeemCodeItem[] = [
@@ -118,13 +182,13 @@ function getDB(): DatabaseSchema {
     const raw = localStorage.getItem(DB_STORAGE_KEY) || localStorage.getItem('blackx_database_v1');
     if (raw) {
       const parsed = JSON.parse(raw) as DatabaseSchema;
-      const categories = parsed.categories && parsed.categories.length ? parsed.categories : INITIAL_CATEGORIES;
-      const denominations = parsed.denominations && parsed.denominations.length ? parsed.denominations : INITIAL_DENOMINATIONS;
-      const redeemCodes = parsed.redeemCodes && parsed.redeemCodes.length ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
+      const categories = Array.isArray(parsed.categories) ? parsed.categories : INITIAL_CATEGORIES;
+      const denominations = Array.isArray(parsed.denominations) ? parsed.denominations : INITIAL_DENOMINATIONS;
+      const redeemCodes = Array.isArray(parsed.redeemCodes) ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
       const settings = parsed.settings || INITIAL_SETTINGS;
-      const orders = parsed.orders || INITIAL_ORDERS;
-      const promoCodes = parsed.promoCodes || INITIAL_PROMO_CODES;
-      const products = buildProductsFromCodes(redeemCodes);
+      const orders = Array.isArray(parsed.orders) ? parsed.orders : INITIAL_ORDERS;
+      const promoCodes = Array.isArray(parsed.promoCodes) ? parsed.promoCodes : INITIAL_PROMO_CODES;
+      const products = buildProductsFromDB(denominations, redeemCodes);
 
       return {
         categories,
@@ -146,7 +210,7 @@ function getDB(): DatabaseSchema {
     categories: INITIAL_CATEGORIES,
     denominations: INITIAL_DENOMINATIONS,
     redeemCodes: INITIAL_REDEEM_CODES,
-    products: buildProductsFromCodes(INITIAL_REDEEM_CODES),
+    products: buildProductsFromDB(INITIAL_DENOMINATIONS, INITIAL_REDEEM_CODES),
     orders: INITIAL_ORDERS,
     promoCodes: INITIAL_PROMO_CODES,
     settings: INITIAL_SETTINGS,
@@ -158,8 +222,10 @@ function getDB(): DatabaseSchema {
 
 function saveDB(data: DatabaseSchema): void {
   try {
-    data.products = buildProductsFromCodes(data.redeemCodes);
-    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(data));
+    data.products = buildProductsFromDB(data.denominations, data.redeemCodes);
+    const jsonStr = JSON.stringify(data);
+    localStorage.setItem(DB_STORAGE_KEY, jsonStr);
+    localStorage.removeItem('blackx_database_v1');
   } catch (err) {
     console.error('Error saving DB to localStorage', err);
   }
@@ -198,7 +264,7 @@ export const api = {
     }
   },
 
-  // Fetch Products
+  // Fetch Products (returns all configured products including OUT OF STOCK ones)
   async getProducts(): Promise<Product[]> {
     const db = getDB();
     const token = this.getAdminToken();
@@ -368,7 +434,13 @@ export const api = {
   // Delete Redeem Code
   async deleteRedeemCode(id: string): Promise<boolean> {
     const db = getDB();
-    db.redeemCodes = db.redeemCodes.filter(c => c.id !== id);
+    const cleanId = String(id || '').trim();
+    if (!cleanId) return false;
+    db.redeemCodes = db.redeemCodes.filter(c => {
+      const matchId = c.id && String(c.id).trim().toLowerCase() === cleanId.toLowerCase();
+      const matchCode = c.code && c.code.trim().toUpperCase() === cleanId.toUpperCase();
+      return !matchId && !matchCode;
+    });
     saveDB(db);
     return true;
   },
@@ -452,7 +524,7 @@ export const api = {
     return db.settings;
   },
 
-  // Submit Order
+  // Submit Order (Strictly requires an AVAILABLE code from database)
   async createOrder(orderPayload: {
     customerName: string;
     customerEmail: string;
@@ -474,26 +546,19 @@ export const api = {
     let revealedCode = '';
 
     for (const item of items) {
+      const itemDenom = Number(item.denomination || item.price || 0);
+
+      // Search for genuinely AVAILABLE code in db
       const codeIndex = db.redeemCodes.findIndex(
-        c => c.status === 'Available' && (c.denomination === item.denomination || c.id === item.productId || c.price === item.price)
+        c => c.status === 'Available' && (c.denomination === itemDenom || c.id === item.productId)
       );
 
-      let targetCodeItem: RedeemCodeItem;
-      if (codeIndex !== -1) {
-        targetCodeItem = db.redeemCodes[codeIndex];
-        db.redeemCodes[codeIndex].status = 'Sold';
-      } else {
-        targetCodeItem = {
-          id: `code-${Date.now()}`,
-          code: `GPRC-${Math.floor(1000 + Math.random() * 9000)}-8K4P-29X7`,
-          category: 'GOOGLE PLAY',
-          denomination: Number(item.denomination || item.price || 500),
-          price: Number(item.price || 500),
-          balance: Number(item.price || 500),
-          status: 'Sold',
-          createdAt: new Date().toISOString()
-        };
+      if (codeIndex === -1) {
+        throw new Error(`The ₹${itemDenom || item.price} denomination is currently OUT OF STOCK. Please choose another denomination.`);
       }
+
+      const targetCodeItem = db.redeemCodes[codeIndex];
+      db.redeemCodes[codeIndex].status = 'Sold';
 
       rawTotal += targetCodeItem.price;
 

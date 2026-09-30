@@ -132,10 +132,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (confirm('Are you sure you want to delete this category?')) {
+    try {
       await api.deleteCategory(id);
-      loadAdminData();
+      await loadAdminData();
       onDataChanged();
+    } catch (err) {
+      console.error('Error deleting category:', err);
     }
   };
 
@@ -172,10 +174,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   const handleDeleteDenom = async (id: string) => {
-    if (confirm('Delete this denomination?')) {
+    try {
       await api.deleteDenomination(id);
-      loadAdminData();
+      await loadAdminData();
       onDataChanged();
+    } catch (err) {
+      console.error('Error deleting denomination:', err);
     }
   };
 
@@ -222,10 +226,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   const handleDeleteCode = async (id: string) => {
-    if (confirm('Delete this redeem code?')) {
+    try {
       await api.deleteRedeemCode(id);
-      loadAdminData();
+      await loadAdminData();
       onDataChanged();
+    } catch (err: any) {
+      console.error('Error deleting redeem code:', err);
     }
   };
 
@@ -709,7 +715,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                               }} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded">
                                 <Edit className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDeleteCode(c.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded">
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCode(c.id)}
+                                title="Delete Redeem Code"
+                                aria-label="Delete Redeem Code"
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded transition-colors"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </td>
@@ -1038,8 +1050,21 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold min-h-[44px]">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl min-h-[44px]">Save Code</button>
+                {editingCode && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleDeleteCode(editingCode.id);
+                      setShowCodeModal(false);
+                      setEditingCode(null);
+                    }}
+                    className="py-3 px-3.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 font-bold rounded-xl text-xs min-h-[44px] transition-colors"
+                  >
+                    Delete Code
+                  </button>
+                )}
+                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold min-h-[44px]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl min-h-[44px]">Save Code</button>
               </div>
             </form>
           </div>

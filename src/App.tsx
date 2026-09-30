@@ -20,11 +20,18 @@ export default function App() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Admin Auth State - Initial load defaults to showing Admin Sign-In page
+  // Admin Auth & View State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return Boolean(api.getAdminToken());
   });
-  const [showAdminPanel, setShowAdminPanel] = useState(true);
+
+  const [showAdminPanel, setShowAdminPanel] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('admin') || window.location.hash === '#admin') return true;
+    }
+    return Boolean(api.getAdminToken());
+  });
 
   // Modals state
   const [selectedProductForCheckout, setSelectedProductForCheckout] = useState<Product | null>(null);
@@ -61,7 +68,7 @@ export default function App() {
     fetchData();
   };
 
-  // If Admin Sign-In page is active on initial load / when requested
+  // If Admin Sign-In page is active and user is not logged in
   if (showAdminPanel && !isAdminLoggedIn) {
     return (
       <AdminSignIn
@@ -92,7 +99,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-blue-600 selection:text-white font-sans w-full max-w-full overflow-x-hidden">
       
-      {/* 1. HEADER */}
+      {/* 1. HEADER (Pure User View - No Admin Dashboard options visible) */}
       <Header
         orderCount={recentOrders.length}
         onOpenMyOrders={() => setShowMyOrdersModal(true)}

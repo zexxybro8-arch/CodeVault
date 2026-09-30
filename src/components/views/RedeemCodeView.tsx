@@ -8,13 +8,15 @@ interface RedeemCodeViewProps {
   categories: Category[];
   onBuyNow: (product: Product) => void;
   isLoading?: boolean;
+  onRedeemModalOpen?: () => void;
 }
 
 export const RedeemCodeView: React.FC<RedeemCodeViewProps> = ({
   products,
   categories,
   onBuyNow,
-  isLoading = false
+  isLoading = false,
+  onRedeemModalOpen = () => {}
 }) => {
   const scrollToMarketplace = () => {
     const el = document.getElementById('marketplace');
@@ -25,7 +27,10 @@ export const RedeemCodeView: React.FC<RedeemCodeViewProps> = ({
 
   return (
     <div className="animate-fadeIn">
-      <Hero onExploreCards={scrollToMarketplace} />
+      <Hero
+        onExploreCards={scrollToMarketplace}
+        onRedeemCode={onRedeemModalOpen}
+      />
       <Marketplace
         products={products}
         categories={categories}
