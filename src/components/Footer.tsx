@@ -9,18 +9,18 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = () => {
   return (
-    <footer className="bg-white border-t border-slate-200/90 py-8">
+    <footer className="bg-white border-t border-slate-200/90 py-6 sm:py-8 w-full max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-center gap-2.5 sm:gap-3 text-center flex-wrap">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 text-center flex-wrap">
           
-          {/* BLACK X Logo Icon */}
-          <div className="w-6 h-6 rounded-md bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
-            X
+          {/* Code Vault Logo Badge */}
+          <div className="w-6 h-6 rounded-md bg-blue-600 text-white font-black text-[10px] flex items-center justify-center shrink-0 shadow-2xs tracking-tighter">
+            CV
           </div>
 
-          {/* BLACK X Bold Text */}
+          {/* Code Vault Bold Text with C and V in Blue */}
           <span className="font-display font-black text-sm sm:text-base text-slate-900 tracking-tight">
-            BLACK <span className="text-blue-600">X</span>
+            <span className="text-blue-600">C</span>ode <span className="text-blue-600">V</span>ault
           </span>
 
           {/* Bullet Separator */}

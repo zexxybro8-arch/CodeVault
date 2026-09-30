@@ -26,8 +26,8 @@ export const WhyChooseUsView: React.FC = () => {
   ];
 
   return (
-    <div className="py-16 bg-white min-h-[500px] animate-fadeIn">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <div className="py-10 sm:py-16 bg-white min-h-[500px] animate-fadeIn w-full max-w-full overflow-x-hidden">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
         
         {/* Header */}
         <div className="text-center space-y-3">
@@ -36,20 +36,20 @@ export const WhyChooseUsView: React.FC = () => {
             <span>PLATFORM GUARANTEE</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-display tracking-tight">
-            Why Choose BLACK X?
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 font-display tracking-tight">
+            Why Choose <span className="text-blue-600">C</span>ode <span className="text-blue-600">V</span>ault?
           </h2>
 
-          <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed max-w-xl mx-auto">
+          <p className="text-slate-600 text-xs sm:text-base font-medium leading-relaxed max-w-xl mx-auto">
             The most trusted marketplace for instant, secure, and 100% verified digital Google Play recharge codes.
           </p>
         </div>
 
         {/* 3 Large Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-6 shadow-xs flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs flex items-center justify-between">
             <div>
-              <div className="font-display font-black text-3xl sm:text-4xl text-blue-600 tracking-tight">
+              <div className="font-display font-black text-2xl sm:text-4xl text-blue-600 tracking-tight">
                 50,000+
               </div>
               <div className="font-extrabold text-xs uppercase tracking-wider text-slate-800 mt-1">
@@ -60,13 +60,13 @@ export const WhyChooseUsView: React.FC = () => {
               </div>
             </div>
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
-              <ShoppingBag className="w-6 h-6" />
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-6 shadow-xs flex items-center justify-between">
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs flex items-center justify-between">
             <div>
-              <div className="font-display font-black text-3xl sm:text-4xl text-blue-600 tracking-tight">
+              <div className="font-display font-black text-2xl sm:text-4xl text-blue-600 tracking-tight">
                 Instant
               </div>
               <div className="font-extrabold text-xs uppercase tracking-wider text-slate-800 mt-1">
@@ -77,13 +77,13 @@ export const WhyChooseUsView: React.FC = () => {
               </div>
             </div>
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
-              <Zap className="w-6 h-6" />
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-6 shadow-xs flex items-center justify-between">
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-xs flex items-center justify-between col-span-1 sm:col-span-2 lg:col-span-1">
             <div>
-              <div className="font-display font-black text-3xl sm:text-4xl text-blue-600 tracking-tight">
+              <div className="font-display font-black text-2xl sm:text-4xl text-blue-600 tracking-tight">
                 100%
               </div>
               <div className="font-extrabold text-xs uppercase tracking-wider text-slate-800 mt-1">
@@ -94,24 +94,24 @@ export const WhyChooseUsView: React.FC = () => {
               </div>
             </div>
             <div className="p-3 bg-blue-100 text-blue-600 rounded-xl shrink-0">
-              <RefreshCw className="w-6 h-6" />
+              <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </div>
 
         {/* 4 Feature Columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 pt-4 border-t border-slate-100">
           {features.map((item, idx) => {
             const IconComp = item.icon;
             return (
               <div
                 key={idx}
-                className="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 space-y-3"
+                className="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200/80 space-y-3"
               >
                 <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                   <IconComp className="w-5 h-5" />
                 </div>
-                <h3 className="font-extrabold text-slate-900 text-base">
+                <h3 className="font-extrabold text-slate-900 text-sm sm:text-base">
                   {item.title}
                 </h3>
                 <p className="text-xs text-slate-600 font-medium leading-relaxed">

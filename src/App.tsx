@@ -90,7 +90,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-blue-600 selection:text-white font-sans w-full max-w-full overflow-x-hidden">
       
       {/* 1. HEADER */}
       <Header

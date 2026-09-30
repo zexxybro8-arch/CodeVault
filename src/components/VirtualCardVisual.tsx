@@ -13,9 +13,9 @@ interface VirtualCardVisualProps {
 
 export const VirtualCardVisual: React.FC<VirtualCardVisualProps> = ({
   cardType = 'VISA',
-  cardName = 'BLACK X CARD',
+  cardName = 'CODE VAULT CARD',
   maskedNumber = '4532 •••• •••• 8821',
-  holderName = 'BLACK X HOLDER',
+  holderName = 'CODE VAULT HOLDER',
   expiry = '12/28',
   limit,
   themeGradient,
@@ -45,7 +45,7 @@ export const VirtualCardVisual: React.FC<VirtualCardVisualProps> = ({
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse" />
           <span className="font-extrabold tracking-wider text-xs uppercase opacity-90 font-display">
-            BLACK <span className="text-blue-300">X</span>
+            <span className="text-blue-300">C</span>ode <span className="text-blue-300">V</span>ault
           </span>
         </div>
         <div className="font-bold text-xs uppercase px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 tracking-wider">

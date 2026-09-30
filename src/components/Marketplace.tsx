@@ -88,13 +88,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   }, [products, searchQuery, selectedCategory, selectedDenomination, sortBy]);
 
   return (
-    <section id="marketplace" className="py-8 bg-white min-h-[600px]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="marketplace" className="py-6 sm:py-8 bg-white min-h-[500px] w-full max-w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         
         {/* Search, Filter & Sort Controls Area */}
-        <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 mb-8 space-y-4">
+        <div className="bg-slate-50/90 p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 mb-6 sm:mb-8 space-y-3.5">
           
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
             
             {/* Search Input */}
             <div className="md:col-span-8 relative">
@@ -106,12 +106,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 placeholder="Search Google Play codes or value (e.g. 500)..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs transition-all"
+                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs transition-all min-h-[42px]"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 min-w-[36px] min-h-[36px] justify-center"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -124,7 +124,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as any)}
-                className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                className="w-full py-2.5 px-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs min-h-[42px]"
               >
                 <option value="default">Sort: Default</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -137,7 +137,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
           {/* Primary Category Filter Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 no-scrollbar border-b border-slate-200/60 pb-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
               Category:
             </span>
             {categoryList.map(cat => {
@@ -146,7 +146,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 <button
                   key={cat}
                   onClick={() => handleCategorySelect(cat)}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap shrink-0 min-h-[36px] ${
                     isSelected
                       ? 'bg-blue-600 text-white shadow-2xs'
                       : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
@@ -162,7 +162,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
           {(selectedCategory === 'GOOGLE PLAY' || selectedCategory === 'ALL') && (
             <div className="pt-1 animate-fadeIn space-y-2">
               <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">
-                <Filter className="w-3.5 h-3.5 text-blue-600" />
+                <Filter className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 <span>Select Recharge Amount / Denomination:</span>
               </div>
 
@@ -173,7 +173,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                     <button
                       key={denom.label}
                       onClick={() => setSelectedDenomination(denom.value)}
-                      className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all whitespace-nowrap shrink-0 ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-extrabold transition-all whitespace-nowrap shrink-0 min-h-[36px] ${
                         isSelected
                           ? 'bg-blue-600 text-white shadow-2xs'
                           : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
@@ -191,16 +191,16 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
         {/* Loading Skeleton */}
         {isLoading && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 animate-pulse">
             {[1, 2, 3, 4].map(n => (
-              <div key={n} className="bg-slate-100 rounded-2xl h-60 border border-slate-200" />
+              <div key={n} className="bg-slate-100 rounded-2xl h-56 border border-slate-200" />
             ))}
           </div>
         )}
 
         {/* Product Cards Grid: 2 columns on desktop, 1 on mobile */}
         {!isLoading && filteredProducts.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {filteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -213,11 +213,11 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
         {/* Empty State */}
         {!isLoading && filteredProducts.length === 0 && (
-          <div className="text-center py-16 bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8">
+          <div className="text-center py-12 sm:py-16 bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6 sm:p-8">
             <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3">
               <Sparkles className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">
               {selectedDenomination
                 ? `No products available for ₹${selectedDenomination}`
                 : 'No Google Play codes matched your search'}
@@ -233,7 +233,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 setSelectedDenomination(null);
                 setSortBy('default');
               }}
-              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors"
+              className="mt-4 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-colors min-h-[40px]"
             >
               Reset Filters / View All Values
             </button>

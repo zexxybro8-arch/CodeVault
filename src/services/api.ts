@@ -1,7 +1,7 @@
 import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings } from '../types';
 
-const ADMIN_TOKEN_KEY = 'blackx_admin_token';
-const DB_STORAGE_KEY = 'blackx_database_v1';
+const ADMIN_TOKEN_KEY = 'codevault_admin_token';
+const DB_STORAGE_KEY = 'codevault_database_v1';
 
 interface DatabaseSchema {
   categories: Category[];
@@ -74,7 +74,7 @@ const INITIAL_REDEEM_CODES: RedeemCodeItem[] = [
 ];
 
 const INITIAL_SETTINGS: MarketplaceSettings = {
-  title: 'BLACK X Prepaid Platform',
+  title: 'Code Vault Prepaid Platform',
   description: 'Instant Google Play Recharge Vouchers & Digital Redeem Codes',
   currency: 'INR (₹)',
   maintenanceMode: false,
@@ -84,7 +84,7 @@ const INITIAL_SETTINGS: MarketplaceSettings = {
 
 const INITIAL_ORDERS: Order[] = [
   {
-    id: 'BX-58192',
+    id: 'CV-58192',
     customerName: 'Alex Mercer',
     customerEmail: 'alex.mercer@example.com',
     customerPhone: '+91 98765 43210',
@@ -108,14 +108,14 @@ const INITIAL_ORDERS: Order[] = [
 ];
 
 const INITIAL_PROMO_CODES: PromoCode[] = [
-  { code: 'BLACKX2026', discountType: 'percentage', discountValue: 15, active: true },
+  { code: 'CODEVAULT2026', discountType: 'percentage', discountValue: 15, active: true },
   { code: 'WELCOME100', discountType: 'fixed', discountValue: 100, active: true },
   { code: 'PREMIUMVIP', discountType: 'percentage', discountValue: 20, active: true }
 ];
 
 function getDB(): DatabaseSchema {
   try {
-    const raw = localStorage.getItem(DB_STORAGE_KEY);
+    const raw = localStorage.getItem(DB_STORAGE_KEY) || localStorage.getItem('blackx_database_v1');
     if (raw) {
       const parsed = JSON.parse(raw) as DatabaseSchema;
       const categories = parsed.categories && parsed.categories.length ? parsed.categories : INITIAL_CATEGORIES;
@@ -168,13 +168,14 @@ function saveDB(data: DatabaseSchema): void {
 export const api = {
   // Admin Token
   getAdminToken(): string | null {
-    return localStorage.getItem(ADMIN_TOKEN_KEY);
+    return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem('blackx_admin_token');
   },
   setAdminToken(token: string) {
     localStorage.setItem(ADMIN_TOKEN_KEY, token);
   },
   clearAdminToken() {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
+    localStorage.removeItem('blackx_admin_token');
   },
 
   // Direct DB Admin Auth Login
@@ -189,7 +190,7 @@ export const api = {
     const isPassValid = inputPass === 'SAGAR551' || inputPass === db.adminPin || inputPass === 'admin123';
 
     if (isUserValid && isPassValid && inputPass) {
-      const token = 'blackx_admin_token_sec_2026';
+      const token = 'codevault_admin_token_sec_2026';
       this.setAdminToken(token);
       return { success: true, token };
     } else {
@@ -201,7 +202,7 @@ export const api = {
   async getProducts(): Promise<Product[]> {
     const db = getDB();
     const token = this.getAdminToken();
-    const isAdmin = token === 'blackx_admin_token_sec_2026';
+    const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
     const activeCatNames = new Set(db.categories.filter(c => c.enabled !== false).map(c => c.name.toUpperCase()));
 
     if (isAdmin) {
@@ -220,7 +221,7 @@ export const api = {
   async getCategories(): Promise<Category[]> {
     const db = getDB();
     const token = this.getAdminToken();
-    const isAdmin = token === 'blackx_admin_token_sec_2026';
+    const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
 
     if (isAdmin) {
       return db.categories;
@@ -272,7 +273,7 @@ export const api = {
   async getDenominations(): Promise<Denomination[]> {
     const db = getDB();
     const token = this.getAdminToken();
-    const isAdmin = token === 'blackx_admin_token_sec_2026';
+    const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
 
     if (isAdmin) {
       return db.denominations;
@@ -510,7 +511,7 @@ export const api = {
 
     const finalDiscount = Number(discountAmount || 0);
     const totalAmount = Math.max(0, rawTotal - finalDiscount);
-    const orderId = `BX-${Math.floor(10000 + Math.random() * 90000)}`;
+    const orderId = `CV-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const newOrder: Order = {
       id: orderId,
@@ -538,7 +539,7 @@ export const api = {
   async getOrders(params?: { email?: string; orderId?: string }): Promise<Order[]> {
     const db = getDB();
     const token = this.getAdminToken();
-    const isAdmin = token === 'blackx_admin_token_sec_2026';
+    const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
 
     if (isAdmin) {
       return db.orders;

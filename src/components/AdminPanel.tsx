@@ -15,7 +15,7 @@ import { Footer } from './Footer';
 import {
   LayoutDashboard, FolderTree, Layers, KeyRound, ShoppingBag,
   Package, Settings, LogOut, Plus, Search,
-  Edit, Trash2, Eye, Upload, RefreshCw, X, Menu, Monitor
+  Edit, Trash2, Eye, Upload, RefreshCw, X, Menu, Monitor, ChevronRight
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -272,72 +272,76 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   });
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900 selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden">
       
       {/* TOP SAAS HEADER WITH MODE SWITCHER */}
-      <header className="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 px-4 sm:px-8 py-3 flex items-center justify-between shadow-md">
+      <header className="sticky top-0 z-40 bg-slate-900 text-white border-b border-slate-800 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2 shadow-md w-full max-w-full">
         
         {/* Left Brand Lockup */}
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg">
+        <div className="flex items-center gap-2.5">
+          <button 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="md:hidden p-1.5 text-slate-400 hover:text-white rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
+            aria-label="Toggle menu"
+          >
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-2xs">
-              X
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-2xs shrink-0 tracking-tighter">
+              CV
             </div>
             <div>
-              <span className="font-display font-black text-lg tracking-tight text-white">
-                BLACK <span className="text-blue-500">X</span>
+              <span className="font-display font-black text-base sm:text-lg tracking-tight text-white leading-none">
+                <span className="text-blue-500">C</span>ode <span className="text-blue-500">V</span>ault
               </span>
-              <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">
+              <span className="block text-[8px] sm:text-[9px] font-extrabold text-slate-400 uppercase tracking-widest leading-none mt-0.5">
                 ADMIN CONSOLE
               </span>
             </div>
           </div>
         </div>
 
-        {/* Center Mode Switcher: [ ADMIN PANEL ] [ USER PREVIEW ] */}
+        {/* Center Mode Switcher */}
         <div className="inline-flex items-center gap-1 p-1 bg-slate-800 rounded-xl border border-slate-700/80">
           <button
             onClick={() => setViewMode('ADMIN')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 ${
               viewMode === 'ADMIN'
                 ? 'bg-blue-600 text-white shadow-2xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>ADMIN PANEL</span>
+            <LayoutDashboard className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>ADMIN</span>
           </button>
 
           <button
             onClick={() => setViewMode('USER_PREVIEW')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+            className={`px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-black transition-all flex items-center gap-1 ${
               viewMode === 'USER_PREVIEW'
                 ? 'bg-blue-600 text-white shadow-2xs'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Monitor className="w-3.5 h-3.5" />
-            <span>USER PREVIEW</span>
+            <Monitor className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>PREVIEW</span>
           </button>
         </div>
 
         {/* Right Actions: Refresh & Logout */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={loadAdminData}
             title="Refresh DB Data"
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
           <button
             onClick={onLogout}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold text-xs rounded-lg transition-all shadow-2xs"
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold text-xs rounded-lg transition-all shadow-2xs"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Sign Out</span>
@@ -348,15 +352,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
       {/* MODE 1: ADMIN PANEL WITH SIDEBAR */}
       {viewMode === 'ADMIN' && (
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative w-full max-w-full">
           
+          {/* MOBILE BACKDROP OVERLAY */}
+          {sidebarOpen && (
+            <div 
+              onClick={() => setSidebarOpen(false)} 
+              className="fixed inset-0 bg-slate-900/60 z-30 md:hidden backdrop-blur-xs" 
+            />
+          )}
+
           {/* SIDEBAR NAVIGATION */}
-          <aside className={`fixed md:relative inset-y-0 left-0 z-30 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+          <aside className={`fixed md:relative inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transition-transform duration-300 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
             <div className="p-4 space-y-6">
               
               <div className="md:hidden flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold text-slate-400 uppercase">Admin Navigation</span>
-                <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white">
+                <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white p-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -366,7 +378,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                 {[
                   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
                   { id: 'categories', label: 'Categories', icon: FolderTree },
-                  { id: 'denominations', label: 'Sub Categories / Denominations', icon: Layers },
+                  { id: 'denominations', label: 'Denominations', icon: Layers },
                   { id: 'codes', label: 'Redeem Codes', icon: KeyRound },
                   { id: 'products', label: 'Products', icon: Package },
                   { id: 'orders', label: 'Orders', icon: ShoppingBag },
@@ -381,13 +393,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                         setActiveTab(item.id as AdminTab);
                         setSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all ${
+                      className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all min-h-[44px] ${
                         isActive
                           ? 'bg-blue-600 text-white font-extrabold shadow-sm'
                           : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                       }`}
                     >
-                      <IconC className="w-4 h-4" />
+                      <IconC className="w-4 h-4 shrink-0" />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -399,7 +411,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             <div className="p-4 border-t border-slate-800">
               <button
                 onClick={onLogout}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-3 bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-colors min-h-[44px]"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Log Out</span>
@@ -408,71 +420,71 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           </aside>
 
           {/* MAIN ADMIN DASHBOARD CONTENT */}
-          <main className="flex-1 overflow-y-auto p-6 max-w-7xl mx-auto w-full space-y-6">
+          <main className="flex-1 overflow-y-auto p-3 sm:p-6 max-w-7xl mx-auto w-full space-y-5">
 
             {/* 1. DASHBOARD HOME */}
             {activeTab === 'dashboard' && (
-              <div className="space-y-6 animate-fadeIn">
+              <div className="space-y-5 animate-fadeIn">
                 
                 {/* Stat Cards Grid */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Total Categories</span>
-                    <div className="text-2xl font-black text-slate-900">{stats?.totalCategories ?? categories.length}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Categories</span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900">{stats?.totalCategories ?? categories.length}</div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Sub Categories / Denominations</span>
-                    <div className="text-2xl font-black text-slate-900">{stats?.totalSubCategories ?? denominations.length}</div>
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Denominations</span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900">{stats?.totalSubCategories ?? denominations.length}</div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Available Codes</span>
-                    <div className="text-2xl font-black text-emerald-600">{stats?.availableCodes ?? redeemCodes.filter(c => c.status === 'Available').length}</div>
+                    <div className="text-xl sm:text-2xl font-black text-emerald-600">{stats?.availableCodes ?? redeemCodes.filter(c => c.status === 'Available').length}</div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Sold Codes</span>
-                    <div className="text-2xl font-black text-blue-600">{stats?.soldCodes ?? redeemCodes.filter(c => c.status === 'Sold').length}</div>
+                    <div className="text-xl sm:text-2xl font-black text-blue-600">{stats?.soldCodes ?? redeemCodes.filter(c => c.status === 'Sold').length}</div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Total Orders</span>
-                    <div className="text-2xl font-black text-slate-900">{stats?.totalOrders ?? orders.length}</div>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900">{stats?.totalOrders ?? orders.length}</div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1 col-span-2 lg:col-span-3">
+                  <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-1 col-span-2 lg:col-span-3">
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Total Sales Revenue</span>
-                    <div className="text-3xl font-black text-slate-900 font-mono">₹{(stats?.totalSales ?? 0).toLocaleString('en-IN')}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">₹{(stats?.totalSales ?? 0).toLocaleString('en-IN')}</div>
                   </div>
                 </div>
 
-                {/* Recent Orders Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden space-y-3 p-5">
+                {/* Recent Orders Table / Card Container */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3 p-4 sm:p-5 w-full overflow-hidden">
                   <h3 className="font-extrabold text-slate-900 text-sm">Recent Activity / Orders</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs font-medium">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left text-xs font-medium min-w-[500px]">
                       <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
                         <tr>
-                          <th className="p-3">Order ID</th>
-                          <th className="p-3">Customer</th>
-                          <th className="p-3">Amount</th>
-                          <th className="p-3">Status</th>
-                          <th className="p-3">Date</th>
+                          <th className="p-2.5">Order ID</th>
+                          <th className="p-2.5">Customer</th>
+                          <th className="p-2.5">Amount</th>
+                          <th className="p-2.5">Status</th>
+                          <th className="p-2.5">Date</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-slate-700">
                         {orders.slice(0, 5).map(o => (
                           <tr key={o.id} className="hover:bg-slate-50/80">
-                            <td className="p-3 font-mono font-bold text-slate-900">{o.id}</td>
-                            <td className="p-3">{o.customerName} ({o.customerEmail})</td>
-                            <td className="p-3 font-mono font-bold">₹{o.totalAmount.toLocaleString('en-IN')}</td>
-                            <td className="p-3">
+                            <td className="p-2.5 font-mono font-bold text-slate-900">{o.id}</td>
+                            <td className="p-2.5 truncate max-w-[150px]">{o.customerName}</td>
+                            <td className="p-2.5 font-mono font-bold">₹{o.totalAmount.toLocaleString('en-IN')}</td>
+                            <td className="p-2.5">
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                 {o.status}
                               </span>
                             </td>
-                            <td className="p-3 text-slate-400">{new Date(o.createdAt).toLocaleDateString()}</td>
+                            <td className="p-2.5 text-slate-400 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -486,8 +498,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {/* 2. CATEGORIES */}
             {activeTab === 'categories' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-extrabold text-slate-900">Marketplace Categories</h3>
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900">Categories</h3>
                   <button
                     onClick={() => {
                       setEditingCat(null);
@@ -495,61 +507,63 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                       setCatIconInput('');
                       setShowCatModal(true);
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5"
+                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shrink-0 min-h-[40px]"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Category</span>
                   </button>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
-                      <tr>
-                        <th className="p-3">Category Name</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {categories.map(c => (
-                        <tr key={c.id} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-extrabold text-slate-900">{c.name}</td>
-                          <td className="p-3">
-                            <button
-                              onClick={() => handleToggleCategory(c)}
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                                c.enabled !== false
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-slate-100 text-slate-500'
-                              }`}
-                            >
-                              {c.enabled !== false ? 'Enabled' : 'Disabled'}
-                            </button>
-                          </td>
-                          <td className="p-3 flex items-center gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingCat(c);
-                                setCatNameInput(c.name);
-                                setCatIconInput(c.iconUrl || '');
-                                setShowCatModal(true);
-                              }}
-                              className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCategory(c.id)}
-                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden w-full">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[400px]">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                        <tr>
+                          <th className="p-3">Category Name</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {categories.map(c => (
+                          <tr key={c.id} className="hover:bg-slate-50/80">
+                            <td className="p-3 font-extrabold text-slate-900">{c.name}</td>
+                            <td className="p-3">
+                              <button
+                                onClick={() => handleToggleCategory(c)}
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                  c.enabled !== false
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}
+                              >
+                                {c.enabled !== false ? 'Enabled' : 'Disabled'}
+                              </button>
+                            </td>
+                            <td className="p-3 flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingCat(c);
+                                  setCatNameInput(c.name);
+                                  setCatIconInput(c.iconUrl || '');
+                                  setShowCatModal(true);
+                                }}
+                                className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(c.id)}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -557,10 +571,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {/* 3. SUB CATEGORIES / DENOMINATIONS */}
             {activeTab === 'denominations' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-900">Sub Categories / Denominations</h3>
-                    <p className="text-xs text-slate-500">Manage denomination filters for Google Play and other categories</p>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900">Sub Categories / Denominations</h3>
+                    <p className="text-xs text-slate-500">Manage denomination filters</p>
                   </div>
                   <button
                     onClick={() => {
@@ -568,19 +582,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                       setDenomValue('500');
                       setShowDenomModal(true);
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5"
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shrink-0 min-h-[40px]"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Add Denomination</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {denominations.map(d => (
-                    <div key={d.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                    <div key={d.id} className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider block">{d.categoryName}</span>
-                        <span className="text-xl font-mono font-black text-slate-900">{d.label}</span>
+                        <span className="text-[9px] font-extrabold text-blue-600 uppercase tracking-wider block">{d.categoryName}</span>
+                        <span className="text-lg font-mono font-black text-slate-900">{d.label}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <button onClick={() => handleToggleDenom(d)} className={`px-2 py-0.5 rounded text-[10px] font-bold ${d.enabled !== false ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>
@@ -600,23 +614,23 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {activeTab === 'codes' && (
               <div className="space-y-4 animate-fadeIn">
                 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                       <input
                         type="text"
                         placeholder="Search code or denomination..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-9 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[40px]"
                       />
                     </div>
 
                     <select
                       value={statusFilter}
                       onChange={e => setStatusFilter(e.target.value)}
-                      className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none"
+                      className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none min-h-[40px]"
                     >
                       <option value="ALL">Status: All</option>
                       <option value="Available">Available</option>
@@ -628,10 +642,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowBulkModal(true)}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5"
+                      className="flex-1 sm:flex-none px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 min-h-[40px]"
                     >
                       <Upload className="w-4 h-4 text-blue-600" />
-                      <span>Bulk Import Codes</span>
+                      <span>Bulk Import</span>
                     </button>
 
                     <button
@@ -642,18 +656,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                         setCodeBalance('500');
                         setShowCodeModal(true);
                       }}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5"
+                      className="flex-1 sm:flex-none px-3.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 min-h-[40px]"
                     >
                       <Plus className="w-4 h-4" />
-                      <span>Add Single Code</span>
+                      <span>Add Code</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Redeem Codes Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden w-full">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[650px]">
                       <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
                         <tr>
                           <th className="p-3">Category</th>
@@ -692,11 +706,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                                 setCodeBalance(c.balance.toString());
                                 setCodeStatus(c.status);
                                 setShowCodeModal(true);
-                              }} className="p-1 text-slate-600 hover:bg-slate-100 rounded">
-                                <Edit className="w-3.5 h-3.5" />
+                              }} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded">
+                                <Edit className="w-4 h-4" />
                               </button>
-                              <button onClick={() => handleDeleteCode(c.id)} className="p-1 text-rose-600 hover:bg-rose-50 rounded">
-                                <Trash2 className="w-3.5 h-3.5" />
+                              <button onClick={() => handleDeleteCode(c.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded">
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             </td>
                           </tr>
@@ -711,35 +725,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {/* 5. PRODUCTS MANAGEMENT */}
             {activeTab === 'products' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
-                      <tr>
-                        <th className="p-3">Product Title</th>
-                        <th className="p-3">Category</th>
-                        <th className="p-3">Price</th>
-                        <th className="p-3">Balance</th>
-                        <th className="p-3">Masked Code</th>
-                        <th className="p-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredProducts.map(p => (
-                        <tr key={p.id} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-extrabold text-slate-900">{p.name}</td>
-                          <td className="p-3 font-bold text-blue-600">{p.category}</td>
-                          <td className="p-3 font-mono font-extrabold text-slate-900">₹{p.price}</td>
-                          <td className="p-3 font-mono font-extrabold text-emerald-600">₹{p.balance}</td>
-                          <td className="p-3 font-mono text-slate-600">{p.maskedCode}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Live on Marketplace
-                            </span>
-                          </td>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden w-full">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[600px]">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                        <tr>
+                          <th className="p-3">Product Title</th>
+                          <th className="p-3">Category</th>
+                          <th className="p-3">Price</th>
+                          <th className="p-3">Balance</th>
+                          <th className="p-3">Masked Code</th>
+                          <th className="p-3">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredProducts.map(p => (
+                          <tr key={p.id} className="hover:bg-slate-50/80">
+                            <td className="p-3 font-extrabold text-slate-900">{p.name}</td>
+                            <td className="p-3 font-bold text-blue-600">{p.category}</td>
+                            <td className="p-3 font-mono font-extrabold text-slate-900">₹{p.price}</td>
+                            <td className="p-3 font-mono font-extrabold text-emerald-600">₹{p.balance}</td>
+                            <td className="p-3 font-mono text-slate-600">{p.maskedCode}</td>
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                Live
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
@@ -747,52 +763,54 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {/* 6. ORDERS MANAGEMENT */}
             {activeTab === 'orders' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
-                      <tr>
-                        <th className="p-3">Order ID</th>
-                        <th className="p-3">Customer</th>
-                        <th className="p-3">Item / Category</th>
-                        <th className="p-3">Amount</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Date</th>
-                        <th className="p-3">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {orders.map(o => (
-                        <tr key={o.id} className="hover:bg-slate-50/80">
-                          <td className="p-3 font-mono font-bold text-slate-900">{o.id}</td>
-                          <td className="p-3">{o.customerName} ({o.customerEmail})</td>
-                          <td className="p-3 font-bold text-blue-600">{o.items[0]?.category || 'GOOGLE PLAY'}</td>
-                          <td className="p-3 font-mono font-bold">₹{o.totalAmount.toLocaleString('en-IN')}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              {o.status}
-                            </span>
-                          </td>
-                          <td className="p-3 text-slate-400">{new Date(o.createdAt).toLocaleDateString()}</td>
-                          <td className="p-3">
-                            <button
-                              onClick={() => setSelectedOrder(o)}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                          </td>
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden w-full">
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left text-xs min-w-[600px]">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-extrabold border-b border-slate-200">
+                        <tr>
+                          <th className="p-3">Order ID</th>
+                          <th className="p-3">Customer</th>
+                          <th className="p-3">Category</th>
+                          <th className="p-3">Amount</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Date</th>
+                          <th className="p-3">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {orders.map(o => (
+                          <tr key={o.id} className="hover:bg-slate-50/80">
+                            <td className="p-3 font-mono font-bold text-slate-900">{o.id}</td>
+                            <td className="p-3 truncate max-w-[140px]">{o.customerName}</td>
+                            <td className="p-3 font-bold text-blue-600">{o.items[0]?.category || 'GOOGLE PLAY'}</td>
+                            <td className="p-3 font-mono font-bold">₹{o.totalAmount.toLocaleString('en-IN')}</td>
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {o.status}
+                              </span>
+                            </td>
+                            <td className="p-3 text-slate-400 whitespace-nowrap">{new Date(o.createdAt).toLocaleDateString()}</td>
+                            <td className="p-3">
+                              <button
+                                onClick={() => setSelectedOrder(o)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded min-w-[32px] min-h-[32px] flex items-center justify-center"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* 7. SETTINGS */}
             {activeTab === 'settings' && (
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-2xs max-w-xl mx-auto space-y-4 animate-fadeIn">
-                <h3 className="text-base font-extrabold text-slate-900 border-b pb-3">Marketplace Settings</h3>
+              <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs max-w-xl mx-auto space-y-4 animate-fadeIn w-full">
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 border-b pb-3">Marketplace Settings</h3>
                 <form onSubmit={handleSaveSettings} className="space-y-4 text-xs font-semibold">
                   <div>
                     <label className="block text-slate-700 mb-1">Marketplace Title</label>
@@ -800,7 +818,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                       type="text"
                       value={settings?.title || ''}
                       onChange={e => setSettings(s => s ? { ...s, title: e.target.value } : null)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl"
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl min-h-[40px]"
                     />
                   </div>
 
@@ -810,7 +828,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                       type="text"
                       value={settings?.description || ''}
                       onChange={e => setSettings(s => s ? { ...s, description: e.target.value } : null)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl"
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl min-h-[40px]"
                     />
                   </div>
 
@@ -820,13 +838,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                       type="text"
                       value={settings?.currency || 'INR (₹)'}
                       onChange={e => setSettings(s => s ? { ...s, currency: e.target.value } : null)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl"
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl min-h-[40px]"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl min-h-[44px]"
                   >
                     Save Settings
                   </button>
@@ -840,10 +858,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
       {/* MODE 2: LIVE USER PREVIEW IN ADMIN PANEL */}
       {viewMode === 'USER_PREVIEW' && (
-        <div className="flex-1 bg-white overflow-y-auto animate-fadeIn">
-          <div className="bg-blue-600 text-white text-xs font-bold py-2 px-4 text-center border-b border-blue-700 flex items-center justify-center gap-2">
-            <Monitor className="w-4 h-4" />
-            <span>LIVE USER PREVIEW — Viewing active marketplace using admin DB data</span>
+        <div className="flex-1 bg-white overflow-y-auto animate-fadeIn w-full max-w-full">
+          <div className="bg-blue-600 text-white text-xs font-bold py-2 px-3 text-center border-b border-blue-700 flex items-center justify-center gap-1.5">
+            <Monitor className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">LIVE USER PREVIEW — Viewing active marketplace</span>
           </div>
 
           <Header
@@ -885,8 +903,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
       {/* --- MODAL 1: ADD / EDIT CATEGORY --- */}
       {showCatModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-extrabold text-slate-900">{editingCat ? 'Edit Category' : 'Add Category'}</h3>
             <form onSubmit={handleSaveCategory} className="space-y-3 text-xs">
               <input
@@ -894,7 +912,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                 placeholder="Category Name (e.g. GOOGLE PLAY)"
                 value={catNameInput}
                 onChange={e => setCatNameInput(e.target.value)}
-                className="w-full p-2.5 border rounded-xl"
+                className="w-full p-3 border rounded-xl min-h-[44px]"
                 required
               />
               <input
@@ -902,11 +920,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                 placeholder="Icon / Logo Image URL (Optional)"
                 value={catIconInput}
                 onChange={e => setCatIconInput(e.target.value)}
-                className="w-full p-2.5 border rounded-xl"
+                className="w-full p-3 border rounded-xl min-h-[44px]"
               />
               <div className="flex items-center gap-2 pt-2">
-                <button type="button" onClick={() => setShowCatModal(false)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-xl">Save</button>
+                <button type="button" onClick={() => setShowCatModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold min-h-[44px]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl min-h-[44px]">Save</button>
               </div>
             </form>
           </div>
@@ -915,11 +933,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
       {/* --- MODAL 2: ADD / EDIT DENOMINATION --- */}
       {showDenomModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-extrabold text-slate-900">{editingDenom ? 'Edit Denomination' : 'Add Denomination'}</h3>
             <form onSubmit={handleSaveDenomination} className="space-y-3 text-xs">
-              <select value={denomCategory} onChange={e => setDenomCategory(e.target.value)} className="w-full p-2.5 border rounded-xl">
+              <select value={denomCategory} onChange={e => setDenomCategory(e.target.value)} className="w-full p-3 border rounded-xl min-h-[44px]">
                 {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
               <input
@@ -927,12 +945,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                 placeholder="Value Amount (e.g. 500)"
                 value={denomValue}
                 onChange={e => setDenomValue(e.target.value)}
-                className="w-full p-2.5 border rounded-xl"
+                className="w-full p-3 border rounded-xl min-h-[44px]"
                 required
               />
               <div className="flex items-center gap-2 pt-2">
-                <button type="button" onClick={() => setShowDenomModal(false)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-xl">Save</button>
+                <button type="button" onClick={() => setShowDenomModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold min-h-[44px]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl min-h-[44px]">Save</button>
               </div>
             </form>
           </div>
@@ -941,116 +959,156 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
       {/* --- MODAL 3: ADD / EDIT SINGLE REDEEM CODE --- */}
       {showCodeModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-extrabold text-slate-900">{editingCode ? 'Edit Redeem Code' : 'Add Single Redeem Code'}</h3>
             <form onSubmit={handleSaveRedeemCode} className="space-y-3 text-xs font-semibold">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-500 mb-1">Category</label>
-                  <select value={codeCategory} onChange={e => setCodeCategory(e.target.value)} className="w-full p-2 border rounded-xl">
+                  <select value={codeCategory} onChange={e => setCodeCategory(e.target.value)} className="w-full p-2.5 border rounded-xl min-h-[40px]">
                     {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-slate-500 mb-1">Denomination</label>
-                  <input type="number" value={codeDenom} onChange={e => setCodeDenom(e.target.value)} className="w-full p-2 border rounded-xl" />
+                  <input
+                    type="number"
+                    value={codeDenom}
+                    onChange={e => setCodeDenom(e.target.value)}
+                    className="w-full p-2.5 border rounded-xl min-h-[40px]"
+                    required
+                  />
                 </div>
               </div>
 
               <div>
                 <label className="block text-slate-500 mb-1">Redeem Code String</label>
-                <input type="text" placeholder="XXXX XXXX XXXX XXXX" value={codeString} onChange={e => setCodeString(e.target.value)} className="w-full p-2.5 border rounded-xl font-mono font-bold" required />
+                <input
+                  type="text"
+                  placeholder="GPRC-XXXX-XXXX-XXXX"
+                  value={codeString}
+                  onChange={e => setCodeString(e.target.value)}
+                  className="w-full p-2.5 border rounded-xl font-mono uppercase font-bold min-h-[40px]"
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-500 mb-1">Price (₹)</label>
-                  <input type="number" value={codePrice} onChange={e => setCodePrice(e.target.value)} className="w-full p-2 border rounded-xl font-mono" />
+                  <input
+                    type="number"
+                    value={codePrice}
+                    onChange={e => setCodePrice(e.target.value)}
+                    className="w-full p-2.5 border rounded-xl font-mono font-bold min-h-[40px]"
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-slate-500 mb-1">Balance (₹)</label>
-                  <input type="number" value={codeBalance} onChange={e => setCodeBalance(e.target.value)} className="w-full p-2 border rounded-xl font-mono text-emerald-600 font-bold" />
+                  <input
+                    type="number"
+                    value={codeBalance}
+                    onChange={e => setCodeBalance(e.target.value)}
+                    className="w-full p-2.5 border rounded-xl font-mono font-bold text-emerald-600 min-h-[40px]"
+                    required
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-500 mb-1">Status</label>
-                <select value={codeStatus} onChange={e => setCodeStatus(e.target.value as CodeStatus)} className="w-full p-2 border rounded-xl">
-                  <option value="Available">Available</option>
-                  <option value="Sold">Sold</option>
-                  <option value="Disabled">Disabled</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-500 mb-1">Status</label>
+                  <select value={codeStatus} onChange={e => setCodeStatus(e.target.value as CodeStatus)} className="w-full p-2.5 border rounded-xl min-h-[40px]">
+                    <option value="Available">Available</option>
+                    <option value="Sold">Sold</option>
+                    <option value="Disabled">Disabled</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-500 mb-1">Note (Optional)</label>
+                  <input
+                    type="text"
+                    value={codeNote}
+                    onChange={e => setCodeNote(e.target.value)}
+                    className="w-full p-2.5 border rounded-xl min-h-[40px]"
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-xl">Save Code</button>
+              <div className="flex items-center gap-2 pt-3">
+                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold min-h-[44px]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl min-h-[44px]">Save Code</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- MODAL 4: BULK CODE IMPORT --- */}
+      {/* --- MODAL 4: BULK IMPORT REDEEM CODES --- */}
       {showBulkModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full space-y-4">
-            <h3 className="font-extrabold text-slate-900">Bulk Redeem Code Import</h3>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-extrabold text-slate-900">Bulk Import Redeem Codes</h3>
             <p className="text-xs text-slate-500">
-              Paste multiple codes below (one per line). Format:<br />
-              <code className="bg-slate-100 p-1 rounded font-mono text-blue-600">CODE | CATEGORY | DENOMINATION | PRICE | BALANCE</code>
+              Paste multiple codes (one per line). Format: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">CODE | CATEGORY | DENOMINATION | PRICE | BALANCE</code>
             </p>
-
             <form onSubmit={handleBulkImport} className="space-y-3">
               <textarea
                 rows={6}
-                placeholder={`GPRC-1000-AAAA-1111 | GOOGLE PLAY | 500 | 450 | 500\nGPRC-2000-BBBB-2222 | GOOGLE PLAY | 1000 | 950 | 1000`}
+                placeholder={`GPRC-9000-1111-9000 | GOOGLE PLAY | 900 | 900 | 900\nGPRC-5000-2222-5000 | GOOGLE PLAY | 5000 | 5000 | 5000`}
                 value={bulkText}
                 onChange={e => setBulkText(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-xl font-mono text-xs"
-                required
+                className="w-full p-3 border rounded-xl font-mono text-xs uppercase"
               />
 
               {bulkResult && (
                 <div className="p-3 bg-slate-50 border rounded-xl text-xs space-y-1">
-                  <p className="font-bold text-emerald-600">✓ Successfully Imported: {bulkResult.imported}</p>
-                  {bulkResult.failed > 0 && <p className="font-bold text-rose-600">⚠ Failed / Duplicates: {bulkResult.failed}</p>}
+                  <p className="font-bold text-emerald-600">Imported: {bulkResult.imported}</p>
+                  <p className="font-bold text-rose-600">Failed / Skipped: {bulkResult.failed}</p>
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => { setShowBulkModal(false); setBulkResult(null); }} className="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-xs">Close</button>
-                <button type="submit" className="flex-1 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl">Import All Codes</button>
+              <div className="flex items-center gap-2 pt-2">
+                <button type="button" onClick={() => setShowBulkModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-xs min-h-[44px]">Close</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold text-xs rounded-xl min-h-[44px]">Start Import</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* --- MODAL 5: ORDER DETAIL --- */}
+      {/* --- MODAL 5: ORDER DETAIL VIEW --- */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full space-y-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="font-extrabold text-slate-900">Order #{selectedOrder.id}</h3>
+              <h3 className="font-extrabold text-slate-900 text-sm">Order Detail: {selectedOrder.id}</h3>
               <button onClick={() => setSelectedOrder(null)} className="p-1 text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-700">
-              <p><span className="font-bold">Customer:</span> {selectedOrder.customerName} ({selectedOrder.customerEmail})</p>
-              <p><span className="font-bold">Phone:</span> {selectedOrder.customerPhone}</p>
-              <p><span className="font-bold">Payment Method:</span> {selectedOrder.paymentMethod}</p>
-              <p><span className="font-bold">Total Amount:</span> ₹{selectedOrder.totalAmount.toLocaleString('en-IN')}</p>
-              <p><span className="font-bold">Date:</span> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
-              
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 mt-2">
-                <span className="font-bold text-slate-500 uppercase text-[10px] block">Assigned Code</span>
-                <span className="font-mono font-black text-slate-900 text-base">{selectedOrder.fullRedeemCode || 'GPRC-9012-8K4P-29X7'}</span>
-              </div>
+            <div className="space-y-2 text-xs">
+              <p><strong>Customer:</strong> {selectedOrder.customerName}</p>
+              <p><strong>Email:</strong> {selectedOrder.customerEmail}</p>
+              <p><strong>Phone:</strong> {selectedOrder.customerPhone}</p>
+              <p><strong>Total Amount:</strong> ₹{selectedOrder.totalAmount}</p>
+              <p><strong>Payment Method:</strong> {selectedOrder.paymentMethod}</p>
+              <p><strong>Status:</strong> {selectedOrder.status}</p>
+
+              {selectedOrder.fullRedeemCode && (
+                <div className="bg-slate-900 text-white p-3 rounded-xl font-mono text-xs space-y-1 mt-3">
+                  <span className="text-[10px] text-blue-300 block font-bold">REVEALED REDEEM CODE</span>
+                  <span className="text-emerald-400 text-base font-bold block">{selectedOrder.fullRedeemCode}</span>
+                </div>
+              )}
             </div>
+
+            <button onClick={() => setSelectedOrder(null)} className="w-full py-3 bg-slate-900 text-white font-bold rounded-xl text-xs min-h-[44px]">
+              Close Detail
+            </button>
           </div>
         </div>
       )}

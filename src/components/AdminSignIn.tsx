@@ -34,24 +34,24 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 selection:bg-blue-600 selection:text-white">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-8 sm:p-10 max-w-md w-full space-y-8 animate-fadeIn">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-3 sm:p-6 selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-10 max-w-md w-full space-y-6 sm:space-y-8 animate-fadeIn">
         
         {/* Brand Lockup */}
         <div className="text-center space-y-3">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white font-black text-2xl flex items-center justify-center mx-auto shadow-md">
-            X
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-600 text-white font-black text-xl sm:text-2xl flex items-center justify-center mx-auto shadow-md tracking-tighter">
+            CV
           </div>
           <div>
             <span className="font-display font-black text-2xl text-slate-900 tracking-tight">
-              BLACK <span className="text-blue-600">X</span>
+              <span className="text-blue-600">C</span>ode <span className="text-blue-600">V</span>ault
             </span>
-            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+            <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mt-0.5">
               PREPAID PLATFORM MANAGEMENT
             </span>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
               <span>ADMIN SIGN IN</span>
@@ -60,7 +60,7 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
         </div>
 
         {/* Sign In Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
           
           {/* User ID / Username */}
           <div className="space-y-1.5">
@@ -73,7 +73,7 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
                 placeholder="Enter Admin User ID"
                 value={userId}
                 onChange={e => setUserId(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all min-h-[44px]"
                 autoComplete="off"
                 autoFocus
               />
@@ -92,14 +92,14 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
                 placeholder="Enter Password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all min-h-[44px]"
                 autoComplete="off"
               />
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 absolute right-2.5 top-2.5 rounded-lg"
+                className="p-2 text-slate-400 hover:text-slate-600 absolute right-2 top-2 rounded-lg min-w-[36px] min-h-[36px] flex items-center justify-center"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -118,7 +118,7 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black text-xs sm:text-sm rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 min-h-[48px]"
           >
             {isLoading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -135,13 +135,13 @@ export const AdminSignIn: React.FC<AdminSignInProps> = ({ onSuccess, onCancel })
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors"
+              className="text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors py-1 inline-block"
             >
               ← Continue to Customer Marketplace
             </button>
           )}
           <p className="text-[11px] font-semibold text-slate-400">
-            BLACK X Secure Server Session • 256-Bit Encrypted
+            Code Vault Secure Server Session • 256-Bit Encrypted
           </p>
         </div>
 

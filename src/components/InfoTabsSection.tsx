@@ -175,7 +175,7 @@ export const InfoTabsSection: React.FC = () => {
             <div className="animate-fadeIn space-y-8 max-w-4xl mx-auto">
               <div className="text-center space-y-2">
                 <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display tracking-tight">
-                  Why Choose BLACK X?
+                  Why Choose <span className="text-blue-600">C</span>ode <span className="text-blue-600">V</span>ault?
                 </h3>
                 <p className="text-slate-600 text-xs sm:text-sm font-medium">
                   Trusted digital voucher platform delivering 100% verified codes.

@@ -33,14 +33,14 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({ onClose, onCodeRedeeme
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn w-full max-w-full">
+      <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto">
         
         {/* Header */}
-        <div className="p-6 bg-blue-600 text-white relative">
+        <div className="p-5 sm:p-6 bg-blue-600 text-white relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-4 right-4 p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
@@ -49,14 +49,14 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({ onClose, onCodeRedeeme
             <Tag className="w-5 h-5 text-white" />
           </div>
 
-          <h3 className="text-xl font-black font-display tracking-tight">Redeem Gift / Voucher Code</h3>
+          <h3 className="text-lg sm:text-xl font-black font-display tracking-tight">Redeem Gift / Voucher Code</h3>
           <p className="text-xs text-blue-100 font-medium mt-1">
-            Enter your BLACK X promotional voucher code to claim instant checkout discounts.
+            Enter your Code Vault promotional voucher code to claim instant checkout discounts.
           </p>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleRedeem} className="p-6 space-y-4">
+        <form onSubmit={handleRedeem} className="p-5 sm:p-6 space-y-4">
           
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -65,19 +65,19 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({ onClose, onCodeRedeeme
             <input
               type="text"
               required
-              placeholder="e.g. BLACKX2026 or WELCOME100"
+              placeholder="e.g. CODEVAULT2026 or WELCOME100"
               value={code}
               onChange={e => setCode(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider font-semibold"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-wider font-semibold min-h-[44px]"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
-              Sample test codes: <strong className="text-slate-700 font-mono">BLACKX2026</strong> (15% OFF) or <strong className="text-slate-700 font-mono">WELCOME100</strong> (₹100 OFF)
+            <p className="text-[11px] text-slate-400 mt-1.5">
+              Sample test codes: <strong className="text-slate-700 font-mono">CODEVAULT2026</strong> (15% OFF) or <strong className="text-slate-700 font-mono">WELCOME100</strong> (₹100 OFF)
             </p>
           </div>
 
           {result && (
             <div
-              className={`p-4 rounded-xl border text-xs font-semibold flex items-start gap-2.5 ${
+              className={`p-3.5 rounded-xl border text-xs font-semibold flex items-start gap-2.5 ${
                 result.success
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                   : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -92,7 +92,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({ onClose, onCodeRedeeme
                 <p className="font-bold">{result.message}</p>
                 {result.success && (
                   <p className="text-[11px] text-emerald-700 mt-0.5">
-                    Your promo discount has been saved! Simply click "BUY NOW" on any card to apply it at checkout.
+                    Your promo discount has been saved! Simply click "REDEEM NOW" on any card to apply it at checkout.
                   </p>
                 )}
               </div>
@@ -103,7 +103,7 @@ export const RedeemModal: React.FC<RedeemModalProps> = ({ onClose, onCodeRedeeme
             <button
               type="submit"
               disabled={isLoading || !code.trim()}
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 min-h-[48px]"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
