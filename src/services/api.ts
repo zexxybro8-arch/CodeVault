@@ -1,7 +1,9 @@
-import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings } from '../types';
+import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings, UserSession } from '../types';
 
 const ADMIN_TOKEN_KEY = 'codevault_admin_token';
 const DB_STORAGE_KEY = 'codevault_database_v1';
+const USER_TOKEN_KEY = 'codevault_user_token';
+const USER_SESSION_KEY = 'codevault_user_session';
 
 interface DatabaseSchema {
   categories: Category[];
@@ -242,6 +244,69 @@ export const api = {
   clearAdminToken() {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
     localStorage.removeItem('blackx_admin_token');
+  },
+
+  // Normal User Token & Session
+  getUserToken(): string | null {
+    return localStorage.getItem(USER_TOKEN_KEY) || localStorage.getItem('blackx_user_token');
+  },
+  getUserSession(): UserSession | null {
+    try {
+      const raw = localStorage.getItem(USER_SESSION_KEY) || localStorage.getItem('blackx_user_session');
+      if (raw) {
+        return JSON.parse(raw) as UserSession;
+      }
+    } catch (e) {
+      console.error('Error reading user session', e);
+    }
+    return null;
+  },
+  setUserSession(user: UserSession): void {
+    const token = user.token || `codevault_user_token_${Date.now()}`;
+    const sessionData: UserSession = { ...user, token };
+    localStorage.setItem(USER_TOKEN_KEY, token);
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionData));
+  },
+  async userLogin(emailOrPhone: string, _password?: string): Promise<{ success: boolean; user?: UserSession; message?: string }> {
+    const cleanInput = String(emailOrPhone || '').trim();
+    if (!cleanInput) {
+      return { success: false, message: 'Please enter your email or phone number.' };
+    }
+
+    const db = getDB();
+    const existingOrder = db.orders.find(
+      o => o.customerEmail.toLowerCase() === cleanInput.toLowerCase() || o.customerPhone === cleanInput
+    );
+
+    const name = existingOrder
+      ? existingOrder.customerName
+      : (cleanInput.includes('@') ? cleanInput.split('@')[0] : 'Customer');
+    const email = cleanInput.includes('@')
+      ? cleanInput.toLowerCase()
+      : `${cleanInput.replace(/[^0-9]/g, '')}@codevault.local`;
+    const phone = existingOrder ? existingOrder.customerPhone : (cleanInput.includes('@') ? '+91 98765 43210' : cleanInput);
+
+    const user: UserSession = {
+      id: `usr-${Date.now()}`,
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      email,
+      phone,
+      token: `codevault_user_token_${Date.now()}`
+    };
+
+    this.setUserSession(user);
+    return { success: true, user };
+  },
+  userLogout(): void {
+    localStorage.removeItem(USER_TOKEN_KEY);
+    localStorage.removeItem(USER_SESSION_KEY);
+    localStorage.removeItem('blackx_user_token');
+    localStorage.removeItem('blackx_user_session');
+    try {
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('Error clearing sessionStorage', e);
+    }
   },
 
   // Direct DB Admin Auth Login

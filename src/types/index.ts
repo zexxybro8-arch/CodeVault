@@ -114,3 +114,11 @@ export interface MarketplaceSettings {
   defaultAvailability: boolean;
   adminPin?: string;
 }
+
+export interface UserSession {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  token?: string;
+}

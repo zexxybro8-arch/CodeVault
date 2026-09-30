@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { ShoppingBag, Menu, X, Tag } from 'lucide-react';
+import { ShoppingBag, Menu, X, Tag, LogOut, User, Compass, HelpCircle } from 'lucide-react';
+import { UserSession } from '../types';
 
 interface HeaderProps {
   orderCount: number;
@@ -7,6 +8,8 @@ interface HeaderProps {
   onOpenAdmin: () => void;
   onOpenRedeem: () => void;
   onNavigateMarketplace: () => void;
+  onRequestLogout?: () => void;
+  currentUser?: UserSession | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -14,7 +17,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMyOrders,
   onOpenAdmin,
   onOpenRedeem,
-  onNavigateMarketplace
+  onNavigateMarketplace,
+  onRequestLogout,
+  currentUser
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -46,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             onClick={handleLogoTap}
             className="flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-0.5 group"
-            title="Code Vault"
+            title="Code Vault (Tap 3x for Admin)"
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-xs group-hover:bg-blue-700 transition-colors shrink-0 tracking-tighter">
               CV
@@ -91,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* MY ORDERS Button */}
           <button
             onClick={onOpenMyOrders}
-            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
+            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
           >
             <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span className="text-xs sm:text-sm">MY ORDERS</span>
@@ -102,11 +107,12 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Mobile Hamburger Menu */}
+          {/* Top-Right Hamburger Menu (☰) - Always visible for customer navigation & logout */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center border border-slate-200"
             aria-label="Toggle menu"
+            title="Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -114,35 +120,86 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu Drawer (Pure User Navigation - Admin link completely hidden) */}
+      {/* Hamburger Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-2 shadow-lg animate-fadeIn max-w-full">
+        <div className="bg-white border-b border-slate-200 px-4 pt-3 pb-4 space-y-2 shadow-xl animate-fadeIn max-w-full">
+          
+          {/* Authenticated User Info Header */}
+          {currentUser && (
+            <div className="px-3.5 py-2.5 mb-2 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+              </div>
+              <div className="flex flex-col overflow-hidden min-w-0 flex-1">
+                <span className="text-xs font-black text-slate-900 truncate">{currentUser.name || 'Customer'}</span>
+                <span className="text-[11px] text-slate-500 truncate">{currentUser.email || currentUser.phone}</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold border border-emerald-200 shrink-0">
+                Active
+              </span>
+            </div>
+          )}
+
+          {/* Navigation Links */}
           <button
             onClick={() => {
               onNavigateMarketplace();
               setMobileMenuOpen(false);
             }}
-            className="block w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px]"
+            className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px] transition-colors"
           >
-            Explore Marketplace
+            <Compass className="w-4 h-4 text-blue-600" />
+            <span>Explore Marketplace</span>
           </button>
+
           <a
             href="#how-it-works"
             onClick={() => setMobileMenuOpen(false)}
-            className="block w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px]"
+            className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px] transition-colors"
           >
-            How It Works
+            <HelpCircle className="w-4 h-4 text-slate-500" />
+            <span>How It Works</span>
           </a>
+
           <button
             onClick={() => {
               onOpenRedeem();
               setMobileMenuOpen(false);
             }}
-            className="flex items-center gap-2 w-full text-left px-3.5 py-3 text-xs font-extrabold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl uppercase tracking-wider min-h-[44px]"
+            className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-extrabold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl uppercase tracking-wider min-h-[44px] transition-colors"
           >
-            <Tag className="w-4 h-4" />
-            Redeem Code
+            <Tag className="w-4 h-4 text-blue-600" />
+            <span>Redeem Code</span>
           </button>
+
+          <button
+            onClick={() => {
+              onOpenMyOrders();
+              setMobileMenuOpen(false);
+            }}
+            className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-extrabold text-slate-700 hover:bg-slate-100 rounded-xl uppercase tracking-wider min-h-[44px] transition-colors"
+          >
+            <ShoppingBag className="w-4 h-4 text-slate-500" />
+            <span>My Orders & Codes</span>
+          </button>
+
+          {/* USER LOG OUT ITEM WITH LOGOUT ICON */}
+          {onRequestLogout && (
+            <div className="pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onRequestLogout();
+                }}
+                className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-black text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded-xl uppercase tracking-wider min-h-[44px] transition-colors"
+              >
+                <LogOut className="w-4 h-4 text-rose-600 shrink-0" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          )}
+
         </div>
       )}
     </header>
