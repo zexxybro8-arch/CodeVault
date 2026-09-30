@@ -54,7 +54,7 @@ export default function App() {
     setIsLoading(true);
     try {
       const [pRes, cRes, oRes] = await Promise.all([
-        api.getProducts(),
+        api.getProducts({ forAdmin: false }),
         api.getCategories(),
         api.getOrders()
       ]);

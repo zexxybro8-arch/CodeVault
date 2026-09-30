@@ -106,6 +106,89 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
   return products.sort((a, b) => (a.denomination || 0) - (b.denomination || 0));
 }
 
+function buildUserProductCards(denominations: Denomination[], redeemCodes: RedeemCodeItem[]): Product[] {
+  const denMap = new Map<string, { category: string; denomination: number; displayOrder: number }>();
+
+  // Include configured denominations
+  for (const den of denominations) {
+    if (den.enabled !== false) {
+      const key = `${den.categoryName.toUpperCase()}_${den.value}`;
+      denMap.set(key, {
+        category: den.categoryName.toUpperCase(),
+        denomination: den.value,
+        displayOrder: den.displayOrder || 99
+      });
+    }
+  }
+
+  // Include any extra denominations from redeemCodes
+  for (const codeItem of redeemCodes) {
+    const key = `${codeItem.category.toUpperCase()}_${codeItem.denomination}`;
+    if (!denMap.has(key)) {
+      denMap.set(key, {
+        category: codeItem.category.toUpperCase(),
+        denomination: codeItem.denomination,
+        displayOrder: 99
+      });
+    }
+  }
+
+  const userProducts: Product[] = [];
+
+  for (const [key, item] of denMap.entries()) {
+    // Strictly count AVAILABLE codes for this denomination
+    const availableCodes = redeemCodes.filter(
+      c => c.status === 'Available' &&
+           c.category.toUpperCase() === item.category &&
+           c.denomination === item.denomination
+    );
+
+    if (availableCodes.length > 0) {
+      // For every AVAILABLE redeem code, render a SEPARATE product card
+      for (const codeItem of availableCodes) {
+        userProducts.push({
+          id: codeItem.id, // Unique database ID of this specific code
+          name: 'Google Play Recharge Code',
+          category: codeItem.category,
+          denomination: codeItem.denomination,
+          price: codeItem.price,
+          balance: codeItem.balance,
+          maskedCode: formatMaskedCode(codeItem.code),
+          fullCode: codeItem.code,
+          deliveryStatus: 'Instant',
+          stock: 1, // Exactly 1 for each individual code card
+          enabled: true,
+          displayOrder: item.displayOrder,
+          createdAt: codeItem.createdAt
+        });
+      }
+    } else {
+      // OUT OF STOCK Product Card for denominations with 0 available codes
+      userProducts.push({
+        id: `prod-out-${item.category.toLowerCase()}-${item.denomination}`,
+        name: 'Google Play Recharge Code',
+        category: item.category,
+        denomination: item.denomination,
+        price: item.denomination,
+        balance: item.denomination,
+        maskedCode: '•••• •••• OUT OF STOCK',
+        deliveryStatus: 'Instant',
+        stock: 0,
+        enabled: true,
+        displayOrder: item.displayOrder,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+
+  return userProducts.sort((a, b) => {
+    if ((a.denomination || 0) !== (b.denomination || 0)) {
+      return (a.denomination || 0) - (b.denomination || 0);
+    }
+    return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+  });
+}
+
 const INITIAL_CATEGORIES: Category[] = [
   { id: 'cat-1', name: 'GOOGLE PLAY', enabled: true, displayOrder: 1, iconUrl: 'https://i.ibb.co/ns82P174/google-play-store-logo-png-transparent-png-logos-10.png' }
 ];
@@ -135,7 +218,9 @@ const INITIAL_REDEEM_CODES: RedeemCodeItem[] = [
   { id: 'code-700', code: 'GPRC-7000-2K11-7000', category: 'GOOGLE PLAY', denomination: 700, price: 700, balance: 700, status: 'Available', createdAt: '2026-01-07T00:00:00.000Z' },
   { id: 'code-900', code: 'GPRC-9000-1A33-9000', category: 'GOOGLE PLAY', denomination: 900, price: 900, balance: 900, status: 'Available', createdAt: '2026-01-08T00:00:00.000Z' },
   { id: 'code-1000', code: 'GPRC-1092-2K11-55ZZ', category: 'GOOGLE PLAY', denomination: 1000, price: 1000, balance: 1000, status: 'Available', createdAt: '2026-02-15T00:00:00.000Z' },
-  { id: 'code-3000', code: 'GPRC-8192-5X8P-72KD', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:00:00.000Z' },
+  { id: 'code-3000-1', code: 'GPRC-3000-9PLH-AWNC', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:00:00.000Z' },
+  { id: 'code-3000-2', code: 'GPRC-3000-GDKD-HDKD', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:01:00.000Z' },
+  { id: 'code-3000-3', code: 'GPRC-8192-5X8P-72KD', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:02:00.000Z' },
   { id: 'code-5000', code: 'GPRC-4410-7Q2M-41AB', category: 'GOOGLE PLAY', denomination: 5000, price: 5000, balance: 5000, status: 'Available', createdAt: '2026-01-12T00:00:00.000Z' },
   { id: 'code-6000', code: 'GPRC-9012-8K4P-29X7', category: 'GOOGLE PLAY', denomination: 6000, price: 6000, balance: 6000, status: 'Available', createdAt: '2026-01-10T00:00:00.000Z' }
 ];
@@ -188,6 +273,15 @@ function getDB(): DatabaseSchema {
       const categories = Array.isArray(parsed.categories) ? parsed.categories : INITIAL_CATEGORIES;
       const denominations = Array.isArray(parsed.denominations) ? parsed.denominations : INITIAL_DENOMINATIONS;
       const redeemCodes = Array.isArray(parsed.redeemCodes) ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
+      
+      // If user has codes and the example 3000 codes are not yet added, add them so separate cards are immediately visible
+      if (redeemCodes.length > 0 && !redeemCodes.some(c => c.code === 'GPRC-3000-9PLH-AWNC')) {
+        redeemCodes.push(
+          { id: 'code-3000-1', code: 'GPRC-3000-9PLH-AWNC', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:00:00.000Z' },
+          { id: 'code-3000-2', code: 'GPRC-3000-GDKD-HDKD', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:01:00.000Z' }
+        );
+      }
+
       const settings = parsed.settings || INITIAL_SETTINGS;
       const orders = Array.isArray(parsed.orders) ? parsed.orders : INITIAL_ORDERS;
       const promoCodes = Array.isArray(parsed.promoCodes) ? parsed.promoCodes : INITIAL_PROMO_CODES;
@@ -310,16 +404,18 @@ export const api = {
   },
 
   // Fetch Products (returns all configured products including OUT OF STOCK ones)
-  async getProducts(): Promise<Product[]> {
+  async getProducts(options?: { forAdmin?: boolean }): Promise<Product[]> {
     const db = getDB();
     const token = this.getAdminToken();
     const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
     const activeCatNames = new Set(db.categories.filter(c => c.enabled !== false).map(c => c.name.toUpperCase()));
 
-    if (isAdmin) {
+    const isForAdmin = options?.forAdmin === true || (isAdmin && options?.forAdmin !== false);
+
+    if (isForAdmin) {
       return db.products;
     } else {
-      return db.products
+      return buildUserProductCards(db.denominations, db.redeemCodes)
         .filter(p => p.enabled && activeCatNames.has(p.category.toUpperCase()))
         .map(p => {
           const { fullCode, ...rest } = p;
@@ -591,10 +687,18 @@ export const api = {
     for (const item of items) {
       const itemDenom = Number(item.denomination || item.price || 0);
 
-      // Search for genuinely AVAILABLE code in db
-      const codeIndex = db.redeemCodes.findIndex(
-        c => c.status === 'Available' && (c.denomination === itemDenom || c.id === item.productId)
-      );
+      // Search for genuinely AVAILABLE code in db (match exact code ID first if provided, else denomination/price)
+      let codeIndex = -1;
+      if (item.productId) {
+        codeIndex = db.redeemCodes.findIndex(
+          c => c.status === 'Available' && c.id === item.productId
+        );
+      }
+      if (codeIndex === -1) {
+        codeIndex = db.redeemCodes.findIndex(
+          c => c.status === 'Available' && (c.denomination === itemDenom || c.price === item.price)
+        );
+      }
 
       if (codeIndex === -1) {
         throw new Error(`The ₹${itemDenom || item.price} denomination is currently OUT OF STOCK. Please choose another denomination.`);

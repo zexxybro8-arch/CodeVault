@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Product, Order, CustomerSession } from '../types';
+import { Product, Order } from '../types';
 import { api } from '../services/api';
 import { X, CheckCircle2, QrCode, CreditCard, ArrowRight, Copy, Check, Loader2 } from 'lucide-react';
 import { CategoryBrandLogo } from './CategoryIcons';
@@ -8,20 +8,18 @@ interface CheckoutModalProps {
   product: Product | null;
   onClose: () => void;
   onOrderCompleted: (order: Order) => void;
-  customerSession?: CustomerSession | null;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   product,
   onClose,
-  onOrderCompleted,
-  customerSession = null
+  onOrderCompleted
 }) => {
   if (!product) return null;
 
-  const [customerName, setCustomerName] = useState(() => customerSession?.name || '');
-  const [customerEmail, setCustomerEmail] = useState(() => customerSession?.email || '');
-  const [customerPhone, setCustomerPhone] = useState(() => customerSession?.phone || '');
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('UPI QR Code');
   
   // Promo code
@@ -81,7 +79,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         customerPhone: customerPhone.trim(),
-        items: [{ productId: product.id, productName: product.name }],
+        items: [{ productId: product.id, productName: product.name, denomination: product.denomination, price: product.price }],
         paymentMethod,
         promoCodeUsed: appliedPromo?.code,
         discountAmount: appliedPromo?.discount

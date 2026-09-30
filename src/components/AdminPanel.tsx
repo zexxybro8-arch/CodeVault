@@ -106,7 +106,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
         api.getCategories(),
         api.getDenominations(),
         api.getRedeemCodes(),
-        api.getProducts(),
+        api.getProducts({ forAdmin: true }),
         api.getOrders(),
         api.getSettings()
       ]);

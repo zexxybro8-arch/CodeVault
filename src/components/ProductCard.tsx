@@ -35,11 +35,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) =
             </span>
           </div>
 
-          {/* Real Stock Status Badge */}
+          {/* Stock Status Badge */}
           {!isOutOfStock ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black text-emerald-700 bg-emerald-50 border border-emerald-300 shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              AVAILABLE ({product.stock})
+              AVAILABLE (1)
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black text-rose-700 bg-rose-50 border border-rose-300 shadow-2xs">
