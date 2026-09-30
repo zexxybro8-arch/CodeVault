@@ -1,0 +1,43 @@
+import React from 'react';
+import { Check } from 'lucide-react';
+
+interface FooterProps {
+  onOpenAdmin?: () => void;
+  onOpenRedeem?: () => void;
+  onOpenMyOrders?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = () => {
+  return (
+    <footer className="bg-white border-t border-slate-200/90 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center gap-2.5 sm:gap-3 text-center flex-wrap">
+          
+          {/* BLACK X Logo Icon */}
+          <div className="w-6 h-6 rounded-md bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
+            X
+          </div>
+
+          {/* BLACK X Bold Text */}
+          <span className="font-display font-black text-sm sm:text-base text-slate-900 tracking-tight">
+            BLACK <span className="text-blue-600">X</span>
+          </span>
+
+          {/* Bullet Separator */}
+          <span className="text-slate-300 font-bold text-sm select-none">•</span>
+
+          {/* TRUSTED BY THOUSANDS Text */}
+          <span className="font-extrabold text-xs sm:text-sm text-slate-800 tracking-wider uppercase">
+            TRUSTED BY THOUSANDS
+          </span>
+
+          {/* Small Blue Verification Badge / Checkmark Tick */}
+          <span className="inline-flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-blue-600 text-white shadow-2xs shrink-0">
+            <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3 stroke-[3]" />
+          </span>
+
+        </div>
+      </div>
+    </footer>
+  );
+};

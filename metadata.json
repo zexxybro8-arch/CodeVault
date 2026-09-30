@@ -1,0 +1,6 @@
+{
+  "name": "BLACK X - Premium Prepaid Cards Marketplace",
+  "description": "Discover, purchase, and manage instant virtual prepaid cards with high spending limits, flexible terms, and guaranteed delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
