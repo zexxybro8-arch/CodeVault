@@ -185,12 +185,12 @@ function getDB(): DatabaseSchema {
     const raw = localStorage.getItem(DB_STORAGE_KEY) || localStorage.getItem('blackx_database_v1');
     if (raw) {
       const parsed = JSON.parse(raw) as DatabaseSchema;
-      const categories = parsed.categories && parsed.categories.length ? parsed.categories : INITIAL_CATEGORIES;
-      const denominations = parsed.denominations && parsed.denominations.length ? parsed.denominations : INITIAL_DENOMINATIONS;
-      const redeemCodes = parsed.redeemCodes && parsed.redeemCodes.length ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
+      const categories = Array.isArray(parsed.categories) ? parsed.categories : INITIAL_CATEGORIES;
+      const denominations = Array.isArray(parsed.denominations) ? parsed.denominations : INITIAL_DENOMINATIONS;
+      const redeemCodes = Array.isArray(parsed.redeemCodes) ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
       const settings = parsed.settings || INITIAL_SETTINGS;
-      const orders = parsed.orders || INITIAL_ORDERS;
-      const promoCodes = parsed.promoCodes || INITIAL_PROMO_CODES;
+      const orders = Array.isArray(parsed.orders) ? parsed.orders : INITIAL_ORDERS;
+      const promoCodes = Array.isArray(parsed.promoCodes) ? parsed.promoCodes : INITIAL_PROMO_CODES;
       const products = buildProductsFromDB(denominations, redeemCodes);
 
       return {
@@ -479,7 +479,11 @@ export const api = {
   // Delete Redeem Code
   async deleteRedeemCode(id: string): Promise<boolean> {
     const db = getDB();
+    const prevCount = db.redeemCodes.length;
     db.redeemCodes = db.redeemCodes.filter(c => c.id !== id);
+    if (db.redeemCodes.length === prevCount) {
+      throw new Error(`Redeem code with id "${id}" not found.`);
+    }
     saveDB(db);
     return true;
   },

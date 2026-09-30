@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import {
   Category, Denomination, RedeemCodeItem, Product, Order,
@@ -15,7 +15,8 @@ import { Footer } from './Footer';
 import {
   LayoutDashboard, FolderTree, Layers, KeyRound, ShoppingBag,
   Package, Settings, LogOut, Plus, Search,
-  Edit, Trash2, Eye, Upload, RefreshCw, X, Menu, Monitor, ChevronRight
+  Edit, Trash2, Eye, Upload, RefreshCw, X, Menu, Monitor, ChevronRight,
+  CheckCircle2, AlertCircle
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -77,6 +78,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   // Selected Order Detail Modal
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  // Redeem Code Delete Confirmation State
+  const [codeToDelete, setCodeToDelete] = useState<RedeemCodeItem | null>(null);
+  const [isDeletingCode, setIsDeletingCode] = useState(false);
+
+  // Admin Toast Notifications
+  const [toast, setToast] = useState<{ id: string; type: 'success' | 'error'; message: string } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ id: `toast-${Date.now()}`, type, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
+
   useEffect(() => {
     loadAdminData();
   }, []);
@@ -132,12 +149,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   const handleDeleteCategory = async (id: string) => {
-    try {
+    if (confirm('Are you sure you want to delete this category?')) {
       await api.deleteCategory(id);
-      await loadAdminData();
+      loadAdminData();
       onDataChanged();
-    } catch (err) {
-      console.error('Error deleting category:', err);
     }
   };
 
@@ -174,12 +189,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   const handleDeleteDenom = async (id: string) => {
-    try {
+    if (confirm('Delete this denomination?')) {
       await api.deleteDenomination(id);
-      await loadAdminData();
+      loadAdminData();
       onDataChanged();
-    } catch (err) {
-      console.error('Error deleting denomination:', err);
     }
   };
 
@@ -193,9 +206,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   const handleSaveRedeemCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!codeString.trim()) return;
+    const isEditing = Boolean(editingCode);
     try {
       if (editingCode) {
-        await api.updateRedeemCode(editingCode.id, {
+        const updated = await api.updateRedeemCode(editingCode.id, {
           code: codeString.toUpperCase().trim(),
           category: codeCategory,
           denomination: Number(codeDenom),
@@ -204,8 +218,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           status: codeStatus,
           note: codeNote
         });
+        if (!updated) {
+          throw new Error('Update returned null');
+        }
+        setShowCodeModal(false);
+        setEditingCode(null);
+        setCodeString('');
+        await loadAdminData();
+        onDataChanged();
+        showToast('success', 'Redeem code updated successfully.');
       } else {
-        await api.createRedeemCode({
+        const created = await api.createRedeemCode({
           code: codeString.toUpperCase().trim(),
           category: codeCategory,
           denomination: Number(codeDenom),
@@ -214,24 +237,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           status: codeStatus,
           note: codeNote
         });
+        if (!created) {
+          throw new Error('Create returned null');
+        }
+        setShowCodeModal(false);
+        setEditingCode(null);
+        setCodeString('');
+        await loadAdminData();
+        onDataChanged();
+        showToast('success', 'Redeem code added successfully.');
       }
-      setShowCodeModal(false);
-      setEditingCode(null);
-      setCodeString('');
-      loadAdminData();
-      onDataChanged();
     } catch (err: any) {
-      alert(err.message || 'Error saving code');
+      console.error('Error saving redeem code', err);
+      if (isEditing) {
+        showToast('error', 'Failed to update redeem code. Please try again.');
+      } else {
+        showToast('error', 'Failed to add redeem code. Please try again.');
+      }
     }
   };
 
-  const handleDeleteCode = async (id: string) => {
+  const handleConfirmDeleteCode = async () => {
+    if (!codeToDelete) return;
+    const targetId = codeToDelete.id;
+    setIsDeletingCode(true);
     try {
-      await api.deleteRedeemCode(id);
-      await loadAdminData();
-      onDataChanged();
-    } catch (err: any) {
-      console.error('Error deleting redeem code:', err);
+      const success = await api.deleteRedeemCode(targetId);
+      if (success) {
+        setCodeToDelete(null);
+        await loadAdminData();
+        onDataChanged();
+        showToast('success', 'Redeem code deleted successfully.');
+      } else {
+        showToast('error', 'Failed to delete redeem code. Please try again.');
+      }
+    } catch (err) {
+      console.error('Failed to delete redeem code', err);
+      showToast('error', 'Failed to delete redeem code. Please try again.');
+    } finally {
+      setIsDeletingCode(false);
     }
   };
 
@@ -686,47 +730,61 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {filteredCodes.map(c => (
-                          <tr key={c.id} className="hover:bg-slate-50/80">
-                            <td className="p-3 font-extrabold text-blue-600">{c.category}</td>
-                            <td className="p-3 font-mono font-extrabold">₹{c.denomination}</td>
-                            <td className="p-3 font-mono font-black text-slate-900 tracking-wider">{c.code}</td>
-                            <td className="p-3 font-mono font-extrabold text-slate-900">₹{c.price}</td>
-                            <td className="p-3 font-mono font-extrabold text-emerald-600">₹{c.balance}</td>
-                            <td className="p-3">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
-                                c.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                c.status === 'Sold' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                'bg-rose-50 text-rose-700 border-rose-200'
-                              }`}>
-                                {c.status}
-                              </span>
-                            </td>
-                            <td className="p-3 flex items-center gap-1.5">
-                              <button onClick={() => {
-                                setEditingCode(c);
-                                setCodeCategory(c.category);
-                                setCodeDenom(c.denomination.toString());
-                                setCodeString(c.code);
-                                setCodePrice(c.price.toString());
-                                setCodeBalance(c.balance.toString());
-                                setCodeStatus(c.status);
-                                setShowCodeModal(true);
-                              }} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded">
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCode(c.id)}
-                                title="Delete Redeem Code"
-                                aria-label="Delete Redeem Code"
-                                className="p-1.5 text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                        {filteredCodes.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-12 px-4 text-center text-slate-500">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                                <KeyRound className="w-6 h-6" />
+                              </div>
+                              <p className="font-extrabold text-sm text-slate-800">No redeem codes available.</p>
+                              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                                {redeemCodes.length === 0
+                                  ? 'The code vault database is currently empty. Click "Add Code" to add a new redeem voucher.'
+                                  : 'No codes match your search query or status filter.'}
+                              </p>
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          filteredCodes.map(c => (
+                            <tr key={c.id} className="hover:bg-slate-50/80">
+                              <td className="p-3 font-extrabold text-blue-600">{c.category}</td>
+                              <td className="p-3 font-mono font-extrabold">₹{c.denomination}</td>
+                              <td className="p-3 font-mono font-black text-slate-900 tracking-wider">{c.code}</td>
+                              <td className="p-3 font-mono font-extrabold text-slate-900">₹{c.price}</td>
+                              <td className="p-3 font-mono font-extrabold text-emerald-600">₹{c.balance}</td>
+                              <td className="p-3">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                                  c.status === 'Available' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                  c.status === 'Sold' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  'bg-rose-50 text-rose-700 border-rose-200'
+                                }`}>
+                                  {c.status}
+                                </span>
+                              </td>
+                              <td className="p-3 flex items-center gap-1.5">
+                                <button onClick={() => {
+                                  setEditingCode(c);
+                                  setCodeCategory(c.category);
+                                  setCodeDenom(c.denomination.toString());
+                                  setCodeString(c.code);
+                                  setCodePrice(c.price.toString());
+                                  setCodeBalance(c.balance.toString());
+                                  setCodeStatus(c.status);
+                                  setShowCodeModal(true);
+                                }} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded" title="Edit Code">
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setCodeToDelete(c)}
+                                  className="p-1.5 text-rose-600 hover:bg-rose-50 rounded min-w-[32px] min-h-[32px] flex items-center justify-center transition-colors"
+                                  title="Delete Code"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1050,21 +1108,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
               </div>
 
               <div className="flex items-center gap-2 pt-3">
-                {editingCode && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await handleDeleteCode(editingCode.id);
-                      setShowCodeModal(false);
-                      setEditingCode(null);
-                    }}
-                    className="py-3 px-3.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 font-bold rounded-xl text-xs min-h-[44px] transition-colors"
-                  >
-                    Delete Code
-                  </button>
-                )}
-                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold min-h-[44px]">Cancel</button>
-                <button type="submit" className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl min-h-[44px]">Save Code</button>
+                <button type="button" onClick={() => setShowCodeModal(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold min-h-[44px]">Cancel</button>
+                <button type="submit" className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl min-h-[44px]">Save Code</button>
               </div>
             </form>
           </div>
@@ -1135,6 +1180,86 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
               Close Detail
             </button>
           </div>
+        </div>
+      )}
+
+      {/* --- MODAL 6: REDEEM CODE DELETE CONFIRMATION --- */}
+      {codeToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn w-full max-w-full"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 sm:p-7 text-center space-y-4 animate-scaleIn">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                Delete this redeem code?
+              </h3>
+              <p className="text-xs text-slate-500 font-mono font-bold bg-slate-50 py-1.5 px-3 rounded-lg border border-slate-100 truncate">
+                {codeToDelete.code} • ₹{codeToDelete.denomination}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isDeletingCode) {
+                    setCodeToDelete(null);
+                  }
+                }}
+                disabled={isDeletingCode}
+                className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-extrabold text-xs sm:text-sm rounded-xl transition-colors min-h-[44px] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDeleteCode}
+                disabled={isDeletingCode}
+                className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-extrabold text-xs sm:text-sm rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 min-h-[44px] disabled:opacity-50"
+              >
+                {isDeletingCode ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- ADMIN TOAST NOTIFICATION --- */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-extrabold animate-fadeIn transition-all max-w-md ${
+            toast.type === 'success'
+              ? 'bg-slate-900 text-emerald-400 border-emerald-500/30 shadow-emerald-950/20'
+              : 'bg-rose-950 text-rose-200 border-rose-800 shadow-rose-950/30'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          )}
+          <span className="text-white flex-1">{toast.message}</span>
+          <button
+            onClick={() => setToast(null)}
+            className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors ml-2"
+            aria-label="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
