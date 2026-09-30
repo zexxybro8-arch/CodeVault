@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Product, Category, Order, CustomerSession } from './types';
+import { Product, Category, Order } from './types';
 import { api } from './services/api';
 import { Header } from './components/Header';
 import { MainNavigation, MainViewTab } from './components/MainNavigation';
@@ -9,10 +9,10 @@ import { WhyChooseUsView } from './components/views/WhyChooseUsView';
 import { CheckoutModal } from './components/CheckoutModal';
 import { MyOrdersModal } from './components/MyOrdersModal';
 import { RedeemModal } from './components/RedeemModal';
-import { CustomerSignInModal } from './components/CustomerSignInModal';
 import { AdminSignIn } from './components/AdminSignIn';
 import { AdminPanel } from './components/AdminPanel';
 import { Footer } from './components/Footer';
+import { LogoutConfirmModal } from './components/LogoutConfirmModal';
 
 export default function App() {
   const [activeView, setActiveView] = useState<MainViewTab>('REDEEM CODE');
@@ -21,11 +21,10 @@ export default function App() {
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Customer Session & Log Out State
-  const [customerSession, setCustomerSession] = useState<CustomerSession | null>(() => {
-    return api.getCustomerSession();
+  // Normal User Session State
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(() => {
+    return api.isUserLoggedIn();
   });
-  const [showCustomerSignInModal, setShowCustomerSignInModal] = useState(false);
 
   // Admin Auth & View State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
@@ -37,6 +36,10 @@ export default function App() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('admin') || window.location.hash === '#admin') return true;
     }
+    // If normal user is logged out, stay on existing authentication location
+    if (!api.isUserLoggedIn() && !api.getAdminToken()) {
+      return true;
+    }
     return Boolean(api.getAdminToken());
   });
 
@@ -44,18 +47,7 @@ export default function App() {
   const [selectedProductForCheckout, setSelectedProductForCheckout] = useState<Product | null>(null);
   const [showMyOrdersModal, setShowMyOrdersModal] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
-
-  // Customer Auth Handlers
-  const handleCustomerLogout = () => {
-    api.customerLogout();
-    setCustomerSession(null);
-  };
-
-  const handleCustomerLoginSuccess = (session: CustomerSession) => {
-    api.setCustomerSession(session);
-    setCustomerSession(session);
-    fetchData();
-  };
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Fetch Initial Data
   const fetchData = async () => {
@@ -77,7 +69,40 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (api.isUserLoggedIn()) {
+      api.initUserSession();
+    }
     fetchData();
+  }, []);
+
+  // Security: Sync with browser navigation & prevent restoring session on Back if logged out
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const userActive = api.isUserLoggedIn();
+      setIsUserLoggedIn(userActive);
+
+      if (!userActive && !api.getAdminToken()) {
+        setShowAdminPanel(true);
+        if (typeof window !== 'undefined' && window.location.hash !== '#admin') {
+          window.history.replaceState(null, '', '#admin');
+        }
+      } else {
+        if (typeof window !== 'undefined') {
+          const hash = window.location.hash;
+          const search = window.location.search;
+          if (hash === '#admin' || search.includes('admin')) {
+            setShowAdminPanel(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
 
   // When order completed in checkout
@@ -85,6 +110,30 @@ export default function App() {
     setRecentOrders(prev => [newOrder, ...prev]);
     // Refresh stock and stats
     fetchData();
+  };
+
+  // Normal User Confirmed Logout Flow
+  const handleConfirmLogout = () => {
+    // 1. Completely log out current normal user and clear session
+    api.clearUserSession();
+    setIsUserLoggedIn(false);
+
+    // 2. Ensure Admin token is cleared as well
+    api.clearAdminToken();
+    setIsAdminLoggedIn(false);
+
+    // 3. Close open user modals
+    setShowLogoutConfirm(false);
+    setShowMyOrdersModal(false);
+    setShowRedeemModal(false);
+    setSelectedProductForCheckout(null);
+
+    // 4. Redirect to the EXACT SAME existing Admin Login location (#admin)
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#admin';
+      window.history.replaceState(null, '', '#admin');
+    }
+    setShowAdminPanel(true);
   };
 
   // If Admin Sign-In page is active and user is not logged in
@@ -95,7 +144,12 @@ export default function App() {
           setIsAdminLoggedIn(true);
         }}
         onCancel={() => {
+          api.initUserSession();
+          setIsUserLoggedIn(true);
           setShowAdminPanel(false);
+          if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }}
       />
     );
@@ -109,6 +163,9 @@ export default function App() {
           api.clearAdminToken();
           setIsAdminLoggedIn(false);
           setShowAdminPanel(false);
+          if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }}
         onDataChanged={fetchData}
       />
@@ -118,16 +175,14 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-blue-600 selection:text-white font-sans w-full max-w-full overflow-x-hidden">
       
-      {/* 1. HEADER (Pure User View - With Customer Log Out / Sign In option) */}
+      {/* 1. HEADER (Pure User View - No Admin Dashboard options visible) */}
       <Header
         orderCount={recentOrders.length}
         onOpenMyOrders={() => setShowMyOrdersModal(true)}
         onOpenAdmin={() => setShowAdminPanel(true)}
         onOpenRedeem={() => setShowRedeemModal(true)}
         onNavigateMarketplace={() => setActiveView('REDEEM CODE')}
-        customerSession={customerSession}
-        onCustomerLogout={handleCustomerLogout}
-        onCustomerLogin={() => setShowCustomerSignInModal(true)}
+        onOpenLogoutConfirm={() => setShowLogoutConfirm(true)}
       />
 
       {/* 2. THREE-BUTTON NAVIGATION BAR [ REDEEM CODE | HOW TO REDEEM | WHY CHOOSE US ] */}
@@ -172,7 +227,6 @@ export default function App() {
           product={selectedProductForCheckout}
           onClose={() => setSelectedProductForCheckout(null)}
           onOrderCompleted={handleOrderCompleted}
-          customerSession={customerSession}
         />
       )}
 
@@ -181,9 +235,6 @@ export default function App() {
         <MyOrdersModal
           onClose={() => setShowMyOrdersModal(false)}
           recentOrders={recentOrders}
-          customerSession={customerSession}
-          onCustomerLogout={handleCustomerLogout}
-          onCustomerLogin={() => setShowCustomerSignInModal(true)}
         />
       )}
 
@@ -194,11 +245,11 @@ export default function App() {
         />
       )}
 
-      {/* 4. Customer Sign In Modal */}
-      {showCustomerSignInModal && (
-        <CustomerSignInModal
-          onClose={() => setShowCustomerSignInModal(false)}
-          onLoginSuccess={handleCustomerLoginSuccess}
+      {/* 4. User Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <LogoutConfirmModal
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={handleConfirmLogout}
         />
       )}
 

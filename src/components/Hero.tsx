@@ -3,7 +3,7 @@ import { Play, ShieldCheck, Zap, Lock } from 'lucide-react';
 
 interface HeroProps {
   onExploreCards: () => void;
-  onRedeemCode: () => void;
+  onRedeemCode?: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onExploreCards, onRedeemCode }) => {

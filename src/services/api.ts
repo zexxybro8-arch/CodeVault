@@ -1,9 +1,10 @@
-import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, CustomerSession, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings } from '../types';
+import { Product, Category, Denomination, RedeemCodeItem, Order, Customer, DashboardStats, PromoCode, OrderStatus, MarketplaceSettings } from '../types';
 
 const ADMIN_TOKEN_KEY = 'codevault_admin_token';
+const USER_TOKEN_KEY = 'codevault_user_token';
+const USER_SESSION_KEY = 'codevault_user_session';
+const USER_LOGGED_OUT_KEY = 'codevault_user_logged_out';
 const DB_STORAGE_KEY = 'codevault_database_v1';
-const CUSTOMER_SESSION_KEY = 'codevault_customer_session';
-const CUSTOMER_LOGGED_OUT_KEY = 'codevault_customer_logged_out';
 
 interface DatabaseSchema {
   categories: Category[];
@@ -184,12 +185,12 @@ function getDB(): DatabaseSchema {
     const raw = localStorage.getItem(DB_STORAGE_KEY) || localStorage.getItem('blackx_database_v1');
     if (raw) {
       const parsed = JSON.parse(raw) as DatabaseSchema;
-      const categories = Array.isArray(parsed.categories) ? parsed.categories : INITIAL_CATEGORIES;
-      const denominations = Array.isArray(parsed.denominations) ? parsed.denominations : INITIAL_DENOMINATIONS;
-      const redeemCodes = Array.isArray(parsed.redeemCodes) ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
+      const categories = parsed.categories && parsed.categories.length ? parsed.categories : INITIAL_CATEGORIES;
+      const denominations = parsed.denominations && parsed.denominations.length ? parsed.denominations : INITIAL_DENOMINATIONS;
+      const redeemCodes = parsed.redeemCodes && parsed.redeemCodes.length ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
       const settings = parsed.settings || INITIAL_SETTINGS;
-      const orders = Array.isArray(parsed.orders) ? parsed.orders : INITIAL_ORDERS;
-      const promoCodes = Array.isArray(parsed.promoCodes) ? parsed.promoCodes : INITIAL_PROMO_CODES;
+      const orders = parsed.orders || INITIAL_ORDERS;
+      const promoCodes = parsed.promoCodes || INITIAL_PROMO_CODES;
       const products = buildProductsFromDB(denominations, redeemCodes);
 
       return {
@@ -225,15 +226,57 @@ function getDB(): DatabaseSchema {
 function saveDB(data: DatabaseSchema): void {
   try {
     data.products = buildProductsFromDB(data.denominations, data.redeemCodes);
-    const jsonStr = JSON.stringify(data);
-    localStorage.setItem(DB_STORAGE_KEY, jsonStr);
-    localStorage.removeItem('blackx_database_v1');
+    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(data));
   } catch (err) {
     console.error('Error saving DB to localStorage', err);
   }
 }
 
 export const api = {
+  // Normal User Session & Authentication
+  getUserSession(): { token: string; userId?: string; email?: string } | null {
+    try {
+      const raw = localStorage.getItem(USER_SESSION_KEY) || sessionStorage.getItem(USER_SESSION_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    const token = localStorage.getItem(USER_TOKEN_KEY);
+    if (token) return { token };
+    return null;
+  },
+
+  setUserSession(session: { token: string; userId?: string; email?: string }) {
+    localStorage.removeItem(USER_LOGGED_OUT_KEY);
+    localStorage.setItem(USER_TOKEN_KEY, session.token);
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+  },
+
+  clearUserSession() {
+    localStorage.removeItem(USER_TOKEN_KEY);
+    localStorage.removeItem(USER_SESSION_KEY);
+    sessionStorage.removeItem(USER_TOKEN_KEY);
+    sessionStorage.removeItem(USER_SESSION_KEY);
+    localStorage.setItem(USER_LOGGED_OUT_KEY, 'true');
+  },
+
+  isUserLoggedIn(): boolean {
+    const isLoggedOut = localStorage.getItem(USER_LOGGED_OUT_KEY) === 'true';
+    if (isLoggedOut) return false;
+    return Boolean(this.getUserSession() || !isLoggedOut);
+  },
+
+  initUserSession() {
+    const isLoggedOut = localStorage.getItem(USER_LOGGED_OUT_KEY) === 'true';
+    if (!isLoggedOut && !this.getUserSession()) {
+      const defaultSession = {
+        token: `cv_user_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+        createdAt: new Date().toISOString()
+      };
+      this.setUserSession(defaultSession);
+    }
+  },
+
   // Admin Token
   getAdminToken(): string | null {
     return localStorage.getItem(ADMIN_TOKEN_KEY) || localStorage.getItem('blackx_admin_token');
@@ -244,44 +287,6 @@ export const api = {
   clearAdminToken() {
     localStorage.removeItem(ADMIN_TOKEN_KEY);
     localStorage.removeItem('blackx_admin_token');
-  },
-
-  // Customer Session & Authentication
-  getCustomerSession(): CustomerSession | null {
-    try {
-      const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.email) return parsed;
-      }
-    } catch (e) {
-      console.error('Error reading customer session', e);
-    }
-
-    // Check if customer explicitly clicked log out
-    const isLoggedOut = localStorage.getItem(CUSTOMER_LOGGED_OUT_KEY);
-    if (!isLoggedOut) {
-      // Default initialized active session for demo customer
-      const defaultCustomer: CustomerSession = {
-        name: 'Alex Mercer',
-        email: 'alex.mercer@example.com',
-        phone: '+91 98765 43210'
-      };
-      localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(defaultCustomer));
-      return defaultCustomer;
-    }
-
-    return null;
-  },
-
-  setCustomerSession(customer: CustomerSession): void {
-    localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify(customer));
-    localStorage.removeItem(CUSTOMER_LOGGED_OUT_KEY);
-  },
-
-  customerLogout(): void {
-    localStorage.removeItem(CUSTOMER_SESSION_KEY);
-    localStorage.setItem(CUSTOMER_LOGGED_OUT_KEY, 'true');
   },
 
   // Direct DB Admin Auth Login
@@ -474,13 +479,7 @@ export const api = {
   // Delete Redeem Code
   async deleteRedeemCode(id: string): Promise<boolean> {
     const db = getDB();
-    const cleanId = String(id || '').trim();
-    if (!cleanId) return false;
-    db.redeemCodes = db.redeemCodes.filter(c => {
-      const matchId = c.id && String(c.id).trim().toLowerCase() === cleanId.toLowerCase();
-      const matchCode = c.code && c.code.trim().toUpperCase() === cleanId.toUpperCase();
-      return !matchId && !matchCode;
-    });
+    db.redeemCodes = db.redeemCodes.filter(c => c.id !== id);
     saveDB(db);
     return true;
   },
@@ -636,12 +635,6 @@ export const api = {
 
     db.orders.unshift(newOrder);
     saveDB(db);
-
-    this.setCustomerSession({
-      name: customerName,
-      email: customerEmail.toLowerCase().trim(),
-      phone: customerPhone
-    });
 
     return newOrder;
   },

@@ -16,7 +16,7 @@ export const RedeemCodeView: React.FC<RedeemCodeViewProps> = ({
   categories,
   onBuyNow,
   isLoading = false,
-  onRedeemModalOpen = () => {}
+  onRedeemModalOpen
 }) => {
   const scrollToMarketplace = () => {
     const el = document.getElementById('marketplace');
@@ -27,10 +27,7 @@ export const RedeemCodeView: React.FC<RedeemCodeViewProps> = ({
 
   return (
     <div className="animate-fadeIn">
-      <Hero
-        onExploreCards={scrollToMarketplace}
-        onRedeemCode={onRedeemModalOpen}
-      />
+      <Hero onExploreCards={scrollToMarketplace} onRedeemCode={onRedeemModalOpen} />
       <Marketplace
         products={products}
         categories={categories}

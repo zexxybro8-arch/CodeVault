@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ShoppingBag, Menu, X, Tag, LogOut, User } from 'lucide-react';
-import { CustomerSession } from '../types';
+import { ShoppingBag, Menu, X, Tag, LogOut } from 'lucide-react';
 
 interface HeaderProps {
   orderCount: number;
@@ -8,9 +7,7 @@ interface HeaderProps {
   onOpenAdmin: () => void;
   onOpenRedeem: () => void;
   onNavigateMarketplace: () => void;
-  customerSession?: CustomerSession | null;
-  onCustomerLogout?: () => void;
-  onCustomerLogin?: () => void;
+  onOpenLogoutConfirm?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,9 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAdmin,
   onOpenRedeem,
   onNavigateMarketplace,
-  customerSession = null,
-  onCustomerLogout,
-  onCustomerLogin
+  onOpenLogoutConfirm
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -93,12 +88,12 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-2">
           
           {/* MY ORDERS Button */}
           <button
             onClick={onOpenMyOrders}
-            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
+            className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-extrabold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-xs transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-h-[40px]"
           >
             <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span className="text-xs sm:text-sm">MY ORDERS</span>
@@ -109,39 +104,12 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Customer / User Log Out / Sign In Button */}
-          {customerSession ? (
-            <div className="flex items-center gap-1.5">
-              <span className="hidden xl:inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1.5 rounded-xl truncate max-w-[130px]">
-                <User className="w-3 h-3 text-blue-600 shrink-0" />
-                <span className="truncate">{customerSession.name.split(' ')[0]}</span>
-              </span>
-
-              <button
-                onClick={onCustomerLogout}
-                title={`Log out (${customerSession.name})`}
-                className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-extrabold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 active:bg-rose-700 border border-rose-200 hover:border-rose-600 rounded-xl shadow-2xs transition-all whitespace-nowrap min-h-[40px]"
-              >
-                <LogOut className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden xs:inline sm:inline">LOG OUT</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onCustomerLogin}
-              title="Customer Sign In"
-              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-2 text-xs font-extrabold text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 rounded-xl transition-all whitespace-nowrap min-h-[40px]"
-            >
-              <User className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">SIGN IN</span>
-            </button>
-          )}
-
-          {/* Mobile Hamburger Menu */}
+          {/* Hamburger Menu (☰) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center border border-transparent hover:border-slate-200"
             aria-label="Toggle menu"
+            title="Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -149,46 +117,9 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
+      {/* Hamburger Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-4 space-y-2.5 shadow-lg animate-fadeIn max-w-full">
-          
-          {/* Customer Profile & Log Out in Mobile Menu */}
-          {customerSession ? (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                  {customerSession.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="truncate">
-                  <p className="text-xs font-black text-slate-900 truncate">{customerSession.name}</p>
-                  <p className="text-[10px] font-semibold text-slate-500 truncate">{customerSession.email}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  onCustomerLogout?.();
-                  setMobileMenuOpen(false);
-                }}
-                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-extrabold flex items-center gap-1 shrink-0 border border-rose-200 transition-colors min-h-[36px]"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Log Out</span>
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => {
-                onCustomerLogin?.();
-                setMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 text-xs font-extrabold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl uppercase tracking-wider min-h-[40px] mb-2"
-            >
-              <User className="w-4 h-4" />
-              <span>Sign In as Customer</span>
-            </button>
-          )}
-
+        <div className="bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-2 shadow-lg animate-fadeIn max-w-full">
           <button
             onClick={() => {
               onNavigateMarketplace();
@@ -215,6 +146,22 @@ export const Header: React.FC<HeaderProps> = ({
             <Tag className="w-4 h-4" />
             Redeem Code
           </button>
+
+          {/* Log Out Option inside hamburger menu */}
+          {onOpenLogoutConfirm && (
+            <div className="pt-1.5 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenLogoutConfirm();
+                }}
+                className="flex items-center gap-2.5 w-full text-left px-3.5 py-3 text-xs font-extrabold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/90 rounded-xl uppercase tracking-wider transition-colors min-h-[44px] group"
+              >
+                <LogOut className="w-4 h-4 text-rose-500 group-hover:text-rose-600 transition-colors shrink-0" />
+                <span>Log Out</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </header>
