@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, Category, Denomination } from '../types';
 import { ProductCard } from './ProductCard';
-import { api } from '../services/api';
+import { api, parseNumeric } from '../services/api';
 import { Search, SlidersHorizontal, Sparkles, X, Filter } from 'lucide-react';
 
 interface MarketplaceProps {
@@ -31,22 +31,32 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     });
   }, []);
 
-  // Category List from DB
+  // Category List from DB and Products
   const categoryList = useMemo(() => {
-    const cats = categories.filter(c => c.enabled !== false).map(c => c.name.toUpperCase());
-    return Array.from(new Set(['ALL', ...cats]));
-  }, [categories]);
+    const dbCats = categories.filter(c => c.enabled !== false).map(c => c.name.trim().toUpperCase());
+    const prodCats = products.map(p => (p.category || '').trim().toUpperCase()).filter(Boolean);
+    return Array.from(new Set(['ALL', ...dbCats, ...prodCats]));
+  }, [categories, products]);
 
-  // Denomination Options (Standard Google Play amounts + DB denominations)
+  // Denomination Options (Standard Google Play amounts + DB denominations + products)
   const denominationOptions = useMemo(() => {
     const defaultVals = [120, 150, 200, 300, 350, 500, 700, 900, 1000, 3000, 5000, 6000];
-    const dbVals = denominations.map(d => d.value);
-    const combinedVals = Array.from(new Set([...defaultVals, ...dbVals])).sort((a, b) => a - b);
+    const dbVals = denominations.map(d => parseNumeric(d.value));
+    const prodDenoms = products.map(p => parseNumeric(p.denomination));
+    const prodPrices = products.map(p => parseNumeric(p.price));
+    const prodBalances = products.map(p => parseNumeric(p.balance));
+
+    const combinedVals = Array.from(
+      new Set([...defaultVals, ...dbVals, ...prodDenoms, ...prodPrices, ...prodBalances])
+    )
+      .filter((v): v is number => v > 0)
+      .sort((a, b) => a - b);
+
     return [
       { label: 'ALL VALUES', value: null },
       ...combinedVals.map(v => ({ label: `₹${v.toLocaleString('en-IN')}`, value: v }))
     ];
-  }, [denominations]);
+  }, [denominations, products]);
 
   // Handle Category Change
   const handleCategorySelect = (cat: string) => {
@@ -59,32 +69,61 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
-      // Category filter
-      if (selectedCategory !== 'ALL' && p.category.toUpperCase() !== selectedCategory.toUpperCase()) {
-        return false;
-      }
-      // Denomination / Value filter
-      if (selectedDenomination !== null) {
-        if (p.price !== selectedDenomination && p.denomination !== selectedDenomination) {
+      // 1. Category filter
+      if (selectedCategory !== 'ALL') {
+        const cleanSelectedCat = selectedCategory.trim().toUpperCase();
+        const cleanProductCat = (p.category || '').trim().toUpperCase();
+        if (cleanSelectedCat !== cleanProductCat) {
           return false;
         }
       }
-      // Search query
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const matchName = p.name.toLowerCase().includes(query);
-        const matchCat = p.category.toLowerCase().includes(query);
-        const matchDesc = p.description?.toLowerCase().includes(query);
-        const matchPrice = p.price.toString().includes(query);
-        const matchDenom = p.denomination?.toString().includes(query);
-        if (!matchName && !matchCat && !matchDesc && !matchPrice && !matchDenom) return false;
+
+      // 2. Denomination / Value filter
+      if (selectedDenomination !== null) {
+        const targetVal = parseNumeric(selectedDenomination);
+        const pDenom = parseNumeric(p.denomination);
+        const pPrice = parseNumeric(p.price);
+        const pBalance = parseNumeric(p.balance);
+
+        const matchesDenom = pDenom === targetVal;
+        const matchesPrice = pPrice === targetVal;
+        const matchesBalance = pBalance === targetVal;
+
+        if (!matchesDenom && !matchesPrice && !matchesBalance) {
+          return false;
+        }
       }
+
+      // 3. Search query
+      if (searchQuery.trim()) {
+        const rawQ = searchQuery.toLowerCase().trim();
+        const cleanNumQ = rawQ.replace(/[^0-9.]/g, '');
+
+        const matchName = (p.name || '').toLowerCase().includes(rawQ);
+        const matchCat = (p.category || '').toLowerCase().includes(rawQ);
+        const matchDesc = (p.description || '').toLowerCase().includes(rawQ);
+        const matchMasked = (p.maskedCode || '').toLowerCase().includes(rawQ);
+        const matchFull = ((p as any).fullCode || '').toLowerCase().includes(rawQ);
+
+        const pDenomStr = (p.denomination ?? '').toString();
+        const pPriceStr = (p.price ?? '').toString();
+        const pBalanceStr = (p.balance ?? '').toString();
+
+        const matchPrice = cleanNumQ ? pPriceStr.includes(cleanNumQ) : pPriceStr.includes(rawQ);
+        const matchDenom = cleanNumQ ? pDenomStr.includes(cleanNumQ) : pDenomStr.includes(rawQ);
+        const matchBalance = cleanNumQ ? pBalanceStr.includes(cleanNumQ) : pBalanceStr.includes(rawQ);
+
+        if (!matchName && !matchCat && !matchDesc && !matchPrice && !matchDenom && !matchBalance && !matchMasked && !matchFull) {
+          return false;
+        }
+      }
+
       return true;
     }).sort((a, b) => {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'newest') return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      return (a.denomination || 0) - (b.denomination || 0);
+      return (a.price || a.denomination || 0) - (b.price || b.denomination || 0);
     });
   }, [products, searchQuery, selectedCategory, selectedDenomination, sortBy]);
 

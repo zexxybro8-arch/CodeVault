@@ -106,85 +106,97 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
   return products.sort((a, b) => (a.denomination || 0) - (b.denomination || 0));
 }
 
-function buildUserProductCards(denominations: Denomination[], redeemCodes: RedeemCodeItem[]): Product[] {
-  const denMap = new Map<string, { category: string; denomination: number; displayOrder: number }>();
+export function parseNumeric(val: any, fallback = 0): number {
+  if (typeof val === 'number') return isNaN(val) ? fallback : val;
+  if (!val) return fallback;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  const parsed = Number(cleaned);
+  return isNaN(parsed) ? fallback : parsed;
+}
 
-  // Include configured denominations
+export function isAvailableStatus(status: any): boolean {
+  if (!status) return false;
+  const s = String(status).trim().toLowerCase();
+  return s === 'available' || s === 'active' || s === 'in stock';
+}
+
+function buildUserProductCards(denominations: Denomination[], redeemCodes: RedeemCodeItem[]): Product[] {
+  const userProducts: Product[] = [];
+  const seenCodeIds = new Set<string>();
+
+  // 1. For EVERY genuinely AVAILABLE code in the database, render a SEPARATE product card!
+  const availableCodes = redeemCodes.filter(c => isAvailableStatus(c.status));
+
+  for (const c of availableCodes) {
+    if (!c.id || seenCodeIds.has(c.id)) continue;
+    seenCodeIds.add(c.id);
+
+    const rawCode = (c.code || (c as any).redeemCode || '').trim();
+    const rawCat = (c.category || 'GOOGLE PLAY').trim();
+    const cat = rawCat.toUpperCase();
+
+    const denom = parseNumeric(c.denomination, 0);
+    const price = parseNumeric(c.price, denom);
+    const balance = parseNumeric(c.balance, price || denom);
+
+    userProducts.push({
+      id: c.id, // Exact unique database ID of that code
+      name: 'Google Play Recharge Code',
+      category: cat,
+      denomination: denom,
+      price: price,
+      balance: balance,
+      maskedCode: formatMaskedCode(rawCode),
+      fullCode: rawCode,
+      deliveryStatus: 'Instant',
+      stock: 1, // Exactly 1 for each individual code card
+      enabled: true,
+      displayOrder: (c as any).displayOrder || 1,
+      createdAt: c.createdAt || new Date().toISOString()
+    });
+  }
+
+  // 2. If a configured denomination has 0 available codes in that category, show 1 out of stock card
+  const availableKeys = new Set(
+    availableCodes.map(c => `${(c.category || 'GOOGLE PLAY').trim().toUpperCase()}_${parseNumeric(c.denomination)}`)
+  );
+  const availablePriceKeys = new Set(
+    availableCodes.map(c => `${(c.category || 'GOOGLE PLAY').trim().toUpperCase()}_${parseNumeric(c.price)}`)
+  );
+
   for (const den of denominations) {
     if (den.enabled !== false) {
-      const key = `${den.categoryName.toUpperCase()}_${den.value}`;
-      denMap.set(key, {
-        category: den.categoryName.toUpperCase(),
-        denomination: den.value,
-        displayOrder: den.displayOrder || 99
-      });
-    }
-  }
+      const denCat = (den.categoryName || 'GOOGLE PLAY').trim().toUpperCase();
+      const denVal = parseNumeric(den.value, 0);
+      const key = `${denCat}_${denVal}`;
 
-  // Include any extra denominations from redeemCodes
-  for (const codeItem of redeemCodes) {
-    const key = `${codeItem.category.toUpperCase()}_${codeItem.denomination}`;
-    if (!denMap.has(key)) {
-      denMap.set(key, {
-        category: codeItem.category.toUpperCase(),
-        denomination: codeItem.denomination,
-        displayOrder: 99
-      });
-    }
-  }
-
-  const userProducts: Product[] = [];
-
-  for (const [key, item] of denMap.entries()) {
-    // Strictly count AVAILABLE codes for this denomination
-    const availableCodes = redeemCodes.filter(
-      c => c.status === 'Available' &&
-           c.category.toUpperCase() === item.category &&
-           c.denomination === item.denomination
-    );
-
-    if (availableCodes.length > 0) {
-      // For every AVAILABLE redeem code, render a SEPARATE product card
-      for (const codeItem of availableCodes) {
+      if (denVal > 0 && !availableKeys.has(key) && !availablePriceKeys.has(key)) {
         userProducts.push({
-          id: codeItem.id, // Unique database ID of this specific code
+          id: `prod-out-${denCat.toLowerCase()}-${denVal}`,
           name: 'Google Play Recharge Code',
-          category: codeItem.category,
-          denomination: codeItem.denomination,
-          price: codeItem.price,
-          balance: codeItem.balance,
-          maskedCode: formatMaskedCode(codeItem.code),
-          fullCode: codeItem.code,
+          category: denCat,
+          denomination: denVal,
+          price: denVal,
+          balance: denVal,
+          maskedCode: '•••• •••• OUT OF STOCK',
           deliveryStatus: 'Instant',
-          stock: 1, // Exactly 1 for each individual code card
+          stock: 0,
           enabled: true,
-          displayOrder: item.displayOrder,
-          createdAt: codeItem.createdAt
+          displayOrder: den.displayOrder || 99,
+          createdAt: new Date().toISOString()
         });
       }
-    } else {
-      // OUT OF STOCK Product Card for denominations with 0 available codes
-      userProducts.push({
-        id: `prod-out-${item.category.toLowerCase()}-${item.denomination}`,
-        name: 'Google Play Recharge Code',
-        category: item.category,
-        denomination: item.denomination,
-        price: item.denomination,
-        balance: item.denomination,
-        maskedCode: '•••• •••• OUT OF STOCK',
-        deliveryStatus: 'Instant',
-        stock: 0,
-        enabled: true,
-        displayOrder: item.displayOrder,
-        createdAt: new Date().toISOString()
-      });
     }
   }
 
   return userProducts.sort((a, b) => {
-    if ((a.denomination || 0) !== (b.denomination || 0)) {
-      return (a.denomination || 0) - (b.denomination || 0);
-    }
+    if (a.stock > 0 && b.stock === 0) return -1;
+    if (a.stock === 0 && b.stock > 0) return 1;
+
+    const valA = a.price || a.denomination || 0;
+    const valB = b.price || b.denomination || 0;
+    if (valA !== valB) return valA - valB;
+
     return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
   });
 }
@@ -273,14 +285,6 @@ function getDB(): DatabaseSchema {
       const categories = Array.isArray(parsed.categories) ? parsed.categories : INITIAL_CATEGORIES;
       const denominations = Array.isArray(parsed.denominations) ? parsed.denominations : INITIAL_DENOMINATIONS;
       const redeemCodes = Array.isArray(parsed.redeemCodes) ? parsed.redeemCodes : INITIAL_REDEEM_CODES;
-      
-      // If user has codes and the example 3000 codes are not yet added, add them so separate cards are immediately visible
-      if (redeemCodes.length > 0 && !redeemCodes.some(c => c.code === 'GPRC-3000-9PLH-AWNC')) {
-        redeemCodes.push(
-          { id: 'code-3000-1', code: 'GPRC-3000-9PLH-AWNC', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:00:00.000Z' },
-          { id: 'code-3000-2', code: 'GPRC-3000-GDKD-HDKD', category: 'GOOGLE PLAY', denomination: 3000, price: 3000, balance: 3000, status: 'Available', createdAt: '2026-01-15T00:01:00.000Z' }
-        );
-      }
 
       const settings = parsed.settings || INITIAL_SETTINGS;
       const orders = Array.isArray(parsed.orders) ? parsed.orders : INITIAL_ORDERS;
@@ -408,19 +412,13 @@ export const api = {
     const db = getDB();
     const token = this.getAdminToken();
     const isAdmin = token === 'codevault_admin_token_sec_2026' || token === 'blackx_admin_token_sec_2026';
-    const activeCatNames = new Set(db.categories.filter(c => c.enabled !== false).map(c => c.name.toUpperCase()));
 
     const isForAdmin = options?.forAdmin === true || (isAdmin && options?.forAdmin !== false);
 
     if (isForAdmin) {
       return db.products;
     } else {
-      return buildUserProductCards(db.denominations, db.redeemCodes)
-        .filter(p => p.enabled && activeCatNames.has(p.category.toUpperCase()))
-        .map(p => {
-          const { fullCode, ...rest } = p;
-          return rest;
-        });
+      return buildUserProductCards(db.denominations, db.redeemCodes);
     }
   },
 
@@ -691,12 +689,16 @@ export const api = {
       let codeIndex = -1;
       if (item.productId) {
         codeIndex = db.redeemCodes.findIndex(
-          c => c.status === 'Available' && c.id === item.productId
+          c => isAvailableStatus(c.status) && c.id === item.productId
         );
       }
       if (codeIndex === -1) {
         codeIndex = db.redeemCodes.findIndex(
-          c => c.status === 'Available' && (c.denomination === itemDenom || c.price === item.price)
+          c => isAvailableStatus(c.status) && (
+            parseNumeric(c.denomination) === itemDenom ||
+            parseNumeric(c.price) === itemDenom ||
+            parseNumeric(c.price) === item.price
+          )
         );
       }
 
