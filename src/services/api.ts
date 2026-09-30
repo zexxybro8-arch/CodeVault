@@ -34,10 +34,12 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
   // Include configured denominations
   for (const den of denominations) {
     if (den.enabled !== false) {
-      const key = `${den.categoryName.toUpperCase()}_${den.value}`;
+      const denCat = (den.categoryName || 'GOOGLE PLAY').trim().toUpperCase();
+      const denVal = parseNumeric(den.value, 0);
+      const key = `${denCat}_${denVal}`;
       denMap.set(key, {
-        category: den.categoryName.toUpperCase(),
-        denomination: den.value,
+        category: denCat,
+        denomination: denVal,
         displayOrder: den.displayOrder || 99
       });
     }
@@ -45,11 +47,13 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
 
   // Include any extra denominations from redeemCodes
   for (const codeItem of redeemCodes) {
-    const key = `${codeItem.category.toUpperCase()}_${codeItem.denomination}`;
+    const codeCat = (codeItem.category || 'GOOGLE PLAY').trim().toUpperCase();
+    const codeDenom = parseNumeric(codeItem.denomination, 0);
+    const key = `${codeCat}_${codeDenom}`;
     if (!denMap.has(key)) {
       denMap.set(key, {
-        category: codeItem.category.toUpperCase(),
-        denomination: codeItem.denomination,
+        category: codeCat,
+        denomination: codeDenom,
         displayOrder: 99
       });
     }
@@ -60,9 +64,9 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
   for (const [key, item] of denMap.entries()) {
     // Strictly count AVAILABLE codes
     const availableCodes = redeemCodes.filter(
-      c => c.status === 'Available' &&
-           c.category.toUpperCase() === item.category &&
-           c.denomination === item.denomination
+      c => isAvailableStatus(c.status) &&
+           (c.category || 'GOOGLE PLAY').trim().toUpperCase() === item.category &&
+           parseNumeric(c.denomination) === item.denomination
     );
 
     const stock = availableCodes.length;
@@ -74,10 +78,10 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
         name: 'Google Play Recharge Code',
         category: item.category,
         denomination: item.denomination,
-        price: firstCode.price,
-        balance: firstCode.balance,
-        maskedCode: formatMaskedCode(firstCode.code),
-        fullCode: firstCode.code,
+        price: parseNumeric(firstCode.price, item.denomination),
+        balance: parseNumeric(firstCode.balance, item.denomination),
+        maskedCode: formatMaskedCode(firstCode.code || (firstCode as any).redeemCode || ''),
+        fullCode: firstCode.code || (firstCode as any).redeemCode || '',
         deliveryStatus: 'Instant',
         stock: stock,
         enabled: true,
@@ -533,22 +537,26 @@ export const api = {
 
   // Create Redeem Code
   async createRedeemCode(codeData: Partial<RedeemCodeItem>): Promise<RedeemCodeItem | null> {
-    if (!codeData.code || !codeData.denomination) {
+    if (!codeData.code || codeData.denomination === undefined) {
       throw new Error('Redeem code and denomination are required');
     }
     const db = getDB();
     const cleanCode = String(codeData.code).trim().toUpperCase();
-    if (db.redeemCodes.some(c => c.code.toUpperCase() === cleanCode)) {
+    if (db.redeemCodes.some(c => c.code.trim().toUpperCase() === cleanCode)) {
       throw new Error('Duplicate redeem code already exists');
     }
 
+    const denom = parseNumeric(codeData.denomination);
+    const price = codeData.price !== undefined ? parseNumeric(codeData.price, denom) : denom;
+    const balance = codeData.balance !== undefined ? parseNumeric(codeData.balance, denom) : denom;
+
     const newCodeItem: RedeemCodeItem = {
-      id: `code-${Date.now()}`,
+      id: `code-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
       code: cleanCode,
-      category: codeData.category ? String(codeData.category).toUpperCase() : 'GOOGLE PLAY',
-      denomination: Number(codeData.denomination),
-      price: codeData.price !== undefined ? Number(codeData.price) : Number(codeData.denomination),
-      balance: codeData.balance !== undefined ? Number(codeData.balance) : Number(codeData.denomination),
+      category: codeData.category ? String(codeData.category).trim().toUpperCase() : 'GOOGLE PLAY',
+      denomination: denom,
+      price: price,
+      balance: balance,
       status: codeData.status || 'Available',
       note: codeData.note || '',
       createdAt: new Date().toISOString()
@@ -563,11 +571,32 @@ export const api = {
   async updateRedeemCode(id: string, updates: Partial<RedeemCodeItem>): Promise<RedeemCodeItem | null> {
     const db = getDB();
     const idx = db.redeemCodes.findIndex(c => c.id === id);
-    if (idx === -1) return null;
+    if (idx === -1) {
+      throw new Error(`Redeem code with ID "${id}" not found in database.`);
+    }
 
-    db.redeemCodes[idx] = { ...db.redeemCodes[idx], ...updates };
+    const current = db.redeemCodes[idx];
+    const cleanCode = updates.code ? String(updates.code).trim().toUpperCase() : current.code;
+
+    // Check duplicate code on other records
+    if (cleanCode && db.redeemCodes.some(c => c.id !== id && c.code.trim().toUpperCase() === cleanCode)) {
+      throw new Error('Duplicate redeem code already exists on another record.');
+    }
+
+    const updatedItem: RedeemCodeItem = {
+      ...current,
+      code: cleanCode,
+      category: updates.category ? String(updates.category).trim().toUpperCase() : current.category,
+      denomination: updates.denomination !== undefined ? parseNumeric(updates.denomination, current.denomination) : current.denomination,
+      price: updates.price !== undefined ? parseNumeric(updates.price, current.price) : current.price,
+      balance: updates.balance !== undefined ? parseNumeric(updates.balance, current.balance) : current.balance,
+      status: updates.status || current.status,
+      note: updates.note !== undefined ? updates.note : current.note
+    };
+
+    db.redeemCodes[idx] = updatedItem;
     saveDB(db);
-    return db.redeemCodes[idx];
+    return updatedItem;
   },
 
   // Delete Redeem Code

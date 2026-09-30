@@ -147,6 +147,7 @@ export default function App() {
           api.initUserSession();
           setIsUserLoggedIn(true);
           setShowAdminPanel(false);
+          fetchData();
           if (typeof window !== 'undefined' && window.location.hash === '#admin') {
             window.history.replaceState(null, '', window.location.pathname);
           }
@@ -163,6 +164,7 @@ export default function App() {
           api.clearAdminToken();
           setIsAdminLoggedIn(false);
           setShowAdminPanel(false);
+          fetchData();
           if (typeof window !== 'undefined' && window.location.hash === '#admin') {
             window.history.replaceState(null, '', window.location.pathname);
           }

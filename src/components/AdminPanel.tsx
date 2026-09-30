@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api';
+import { api, parseNumeric } from '../services/api';
 import {
   Category, Denomination, RedeemCodeItem, Product, Order,
   DashboardStats, MarketplaceSettings, CodeStatus
@@ -41,6 +41,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   const [denominations, setDenominations] = useState<Denomination[]>([]);
   const [redeemCodes, setRedeemCodes] = useState<RedeemCodeItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [userProducts, setUserProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -101,12 +102,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   const loadAdminData = async () => {
     setIsLoading(true);
     try {
-      const [sRes, cRes, dRes, rcRes, pRes, oRes, setRes] = await Promise.all([
+      const [sRes, cRes, dRes, rcRes, pRes, uPRes, oRes, setRes] = await Promise.all([
         api.getDashboardStats(),
         api.getCategories(),
         api.getDenominations(),
         api.getRedeemCodes(),
         api.getProducts({ forAdmin: true }),
+        api.getProducts({ forAdmin: false }),
         api.getOrders(),
         api.getSettings()
       ]);
@@ -115,6 +117,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
       setDenominations(dRes);
       setRedeemCodes(rcRes);
       setProducts(pRes);
+      setUserProducts(uPRes);
       setOrders(oRes);
       if (setRes) setSettings(setRes);
     } catch (err) {
@@ -212,9 +215,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
         const updated = await api.updateRedeemCode(editingCode.id, {
           code: codeString.toUpperCase().trim(),
           category: codeCategory,
-          denomination: Number(codeDenom),
-          price: Number(codePrice),
-          balance: Number(codeBalance),
+          denomination: parseNumeric(codeDenom),
+          price: parseNumeric(codePrice),
+          balance: parseNumeric(codeBalance),
           status: codeStatus,
           note: codeNote
         });
@@ -224,6 +227,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
         setShowCodeModal(false);
         setEditingCode(null);
         setCodeString('');
+        setCodeNote('');
         await loadAdminData();
         onDataChanged();
         showToast('success', 'Redeem code updated successfully.');
@@ -231,9 +235,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
         const created = await api.createRedeemCode({
           code: codeString.toUpperCase().trim(),
           category: codeCategory,
-          denomination: Number(codeDenom),
-          price: Number(codePrice),
-          balance: Number(codeBalance),
+          denomination: parseNumeric(codeDenom),
+          price: parseNumeric(codePrice),
+          balance: parseNumeric(codeBalance),
           status: codeStatus,
           note: codeNote
         });
@@ -243,6 +247,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
         setShowCodeModal(false);
         setEditingCode(null);
         setCodeString('');
+        setCodeNote('');
         await loadAdminData();
         onDataChanged();
         showToast('success', 'Redeem code added successfully.');
@@ -770,6 +775,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                                   setCodePrice(c.price.toString());
                                   setCodeBalance(c.balance.toString());
                                   setCodeStatus(c.status);
+                                  setCodeNote(c.note || '');
                                   setShowCodeModal(true);
                                 }} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded" title="Edit Code">
                                   <Edit className="w-4 h-4" />
@@ -955,7 +961,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
                   onRedeemCode={() => {}}
                 />
                 <Marketplace
-                  products={products}
+                  products={userProducts}
                   categories={categories}
                   onBuyNow={() => alert('Order simulation in preview mode')}
                   isLoading={isLoading}
