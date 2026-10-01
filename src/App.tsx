@@ -57,9 +57,9 @@ export default function App() {
 
   // Fetch Initial Data
   const fetchData = async () => {
-    setIsLoading(true);
     try {
-      const freshUser = api.getCurrentUser();
+      await api.fetchServerDB();
+      const freshUser = await api.getFreshCurrentUser();
       setCurrentUser(freshUser);
 
       const [pRes, cRes, oRes, sRes] = await Promise.all([
@@ -81,6 +81,30 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
+
+    // Polling every 5 seconds so Device B automatically syncs with Device A
+    const pollTimer = setInterval(() => {
+      fetchData();
+    }, 5000);
+
+    // Refresh data when user focuses window/tab or unlocks phone screen
+    const handleFocus = () => {
+      fetchData();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(pollTimer);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   // Security: Sync with browser navigation

@@ -29,7 +29,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         setDenominations(res.filter(d => d.enabled !== false));
       }
     });
-  }, []);
+  }, [products]);
 
   // Category List from DB and Products
   const categoryList = useMemo(() => {

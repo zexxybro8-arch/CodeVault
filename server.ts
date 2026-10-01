@@ -19,6 +19,17 @@ if (!fs.existsSync(DATA_DIR)) {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// CORS headers for cross-origin requests between AI Studio Preview and Live Website
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-token, Cache-Control, Pragma');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Default Initial Database State
 function getInitialDB() {
   return {
@@ -30,10 +41,10 @@ function getInitialDB() {
       { id: 'cat-5', name: 'FREE FIRE MAX', iconUrl: 'https://cdn-icons-png.flaticon.com/512/3408/3408545.png', enabled: true, displayOrder: 5 }
     ],
     denominations: [
-      { id: 'den-1', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 120, label: '₹120', price: 120, balance: 120, name: 'Google Play Recharge Code', enabled: true, displayOrder: 1 },
-      { id: 'den-2', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 150, label: '₹150', price: 150, balance: 150, name: 'Google Play Recharge Code', enabled: true, displayOrder: 2 },
-      { id: 'den-3', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 200, label: '₹200', price: 3000, balance: 3000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 3 },
-      { id: 'den-4', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 300, label: '₹300', price: 300, balance: 300, name: 'Google Play Recharge Code', enabled: true, displayOrder: 4 },
+      { id: 'den-1', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 120, label: '₹120', price: 120, balance: 1800, name: 'Google Play Recharge Code', enabled: true, displayOrder: 1 },
+      { id: 'den-2', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 150, label: '₹150', price: 150, balance: 2500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 2 },
+      { id: 'den-3', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 200, label: '₹200', price: 200, balance: 3000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 3 },
+      { id: 'den-4', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 300, label: '₹300', price: 300, balance: 4500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 4 },
       { id: 'den-5', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 350, label: '₹350', price: 6000, balance: 6000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 5 },
       { id: 'den-6', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 500, label: '₹500', price: 450, balance: 500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 6 },
       { id: 'den-7', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 700, label: '₹700', price: 700, balance: 700, name: 'Google Play Recharge Code', enabled: true, displayOrder: 7 },
@@ -673,6 +684,9 @@ app.post('/api/orders', (req, res) => {
 // 9. Website Branding & Platform Settings API
 app.get('/api/settings', (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     const db = readDB();
     const { adminPin, ...publicSettings } = db.settings || {};
     res.json({ success: true, settings: publicSettings });
@@ -718,9 +732,12 @@ app.post('/api/admin/login', (req, res) => {
   }
 });
 
-// 9. Full DB sync / get for client services
+// 11. Full DB sync / get for client services
 app.get('/api/db', (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     const db = readDB();
     res.json(db);
   } catch (err: any) {
@@ -730,6 +747,15 @@ app.get('/api/db', (req, res) => {
 
 app.post('/api/db', (req, res) => {
   try {
+    const adminToken = req.headers['x-admin-token'] || req.headers.authorization || req.body?.adminToken;
+    const isAuthorizedAdmin = adminToken === 'codevault_admin_token_sec_2026' || adminToken === 'Bearer codevault_admin_token_sec_2026';
+
+    if (!isAuthorizedAdmin) {
+      // Unauthenticated client attempting to post full DB overwrite -> read & return fresh DB instead
+      const db = readDB();
+      return res.status(200).json({ success: true, message: 'Read-only mode for non-admin client', db });
+    }
+
     const existing = readDB();
     const newDb = req.body || {};
     if (!newDb.settings) newDb.settings = existing.settings || {};
