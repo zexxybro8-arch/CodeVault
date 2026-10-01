@@ -1499,10 +1499,17 @@ export const api = {
       if (res.ok) {
         const data = await res.json();
         if (data.success && data.settings) {
+          const freshDb = getDB();
+          freshDb.settings = { ...freshDb.settings, ...data.settings };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(freshDb));
+          }
           return data.settings as MarketplaceSettings;
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error('Failed to sync settings with server', err);
+    }
 
     return db.settings;
   },

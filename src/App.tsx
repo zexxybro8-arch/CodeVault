@@ -266,6 +266,7 @@ export default function App() {
       {selectedProductForCheckout && (
         <CheckoutModal
           product={selectedProductForCheckout}
+          logoUrl={settings?.logoUrl}
           onClose={() => setSelectedProductForCheckout(null)}
           onOrderCompleted={handleOrderCompleted}
           onOpenDeposit={() => {

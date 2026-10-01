@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Product, Order, User } from '../types';
+import { Product, Order } from '../types';
 import { api } from '../services/api';
-import { X, CheckCircle2, QrCode, CreditCard, ArrowRight, Copy, Check, Loader2, Wallet, Plus } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, Copy, Check, Loader2, Wallet } from 'lucide-react';
 import { CategoryBrandLogo } from './CategoryIcons';
 
 interface CheckoutModalProps {
@@ -9,28 +9,24 @@ interface CheckoutModalProps {
   onClose: () => void;
   onOrderCompleted: (order: Order) => void;
   onOpenDeposit?: () => void;
+  logoUrl?: string;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   product,
   onClose,
   onOrderCompleted,
-  onOpenDeposit
+  onOpenDeposit,
+  logoUrl
 }) => {
   if (!product) return null;
 
   const currentUser = api.getCurrentUser();
+  const [logoFailed, setLogoFailed] = useState(false);
 
-  const [customerName, setCustomerName] = useState(currentUser?.name || '');
-  const [customerEmail, setCustomerEmail] = useState(currentUser?.email || '');
-  const [customerPhone, setCustomerPhone] = useState('+91 98765 43210');
-  const [paymentMethod, setPaymentMethod] = useState(currentUser && (currentUser.walletBalance || 0) >= product.price ? 'Wallet' : 'UPI QR Code');
-  
-  // Promo code
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
-  const [promoMessage, setPromoMessage] = useState<string | null>(null);
-  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoUrl]);
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,62 +35,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [copiedText, setCopiedText] = useState(false);
 
   // Calculations
-  const rawTotal = product.price;
-  const discountAmount = appliedPromo ? appliedPromo.discount : 0;
-  const finalTotal = Math.max(0, rawTotal - discountAmount);
+  const finalTotal = product.price;
   const walletBalance = currentUser?.walletBalance || 0;
   const hasEnoughWallet = walletBalance >= finalTotal;
 
-  const handleApplyPromo = async () => {
-    if (!promoCodeInput.trim()) return;
-    setIsValidatingPromo(true);
-    setPromoMessage(null);
-    try {
-      const code = promoCodeInput.trim().toUpperCase();
-      if (code === 'VAULT10' || code === 'CODEVAULT2026') {
-        const discount = Math.round(rawTotal * 0.1);
-        setAppliedPromo({ code, discount });
-        setPromoMessage(`Promo code '${code}' applied! Saved ₹${discount}`);
-      } else if (code === 'SAVE50') {
-        const discount = Math.min(50, rawTotal);
-        setAppliedPromo({ code, discount });
-        setPromoMessage(`Promo code '${code}' applied! Saved ₹${discount}`);
-      } else {
-        setAppliedPromo(null);
-        setPromoMessage('Invalid promo code');
-      }
-    } catch (err) {
-      setPromoMessage('Error validating code');
-    } finally {
-      setIsValidatingPromo(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
-      setErrorMsg('Please complete all required contact fields');
+    setErrorMsg(null);
+
+    if (!currentUser) {
+      setErrorMsg('Please sign in to complete your purchase.');
       return;
     }
-    setErrorMsg(null);
+
+    if (!hasEnoughWallet) {
+      setErrorMsg(`Insufficient wallet balance. You have ₹${walletBalance.toFixed(2)}, need ₹${finalTotal.toFixed(2)}.`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // If paying with wallet, verify & deduct wallet balance first
-      if (paymentMethod === 'Wallet') {
-        if (!currentUser) {
-          throw new Error('Please sign in to pay with your wallet.');
-        }
-        if (!hasEnoughWallet) {
-          throw new Error(`Insufficient wallet balance. You have ₹${walletBalance.toFixed(2)}, need ₹${finalTotal}.`);
-        }
-      }
-
       const orderRes = await api.createOrder({
-        userId: currentUser?.id,
-        customerName: customerName.trim(),
-        customerEmail: customerEmail.trim(),
-        customerPhone: customerPhone.trim(),
+        userId: currentUser.id,
+        customerName: currentUser.name || 'CodeVault Customer',
+        customerEmail: currentUser.email || 'customer@example.com',
+        customerPhone: '',
         items: [{
           productId: product.id,
           productName: product.name,
@@ -104,17 +70,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           maskedCode: product.maskedCode
         }],
         totalAmount: finalTotal,
-        paymentMethod: paymentMethod === 'Wallet' ? 'CodeVault Wallet' : paymentMethod,
-        promoCodeUsed: appliedPromo?.code,
-        discountAmount: appliedPromo?.discount,
+        paymentMethod: 'CodeVault Wallet',
         fullRedeemCode: product.fullCode || `GPRC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`
       });
 
       if (orderRes) {
-        // If wallet was used, deduct on server
-        if (paymentMethod === 'Wallet' && currentUser) {
-          await api.payWithWallet(currentUser.id, finalTotal, orderRes.id, `Payment for ${product.name}`);
-        }
+        await api.payWithWallet(currentUser.id, finalTotal, orderRes.id, `Payment for ${product.name}`);
         setCompletedOrder(orderRes);
         onOrderCompleted(orderRes);
       }
@@ -134,20 +95,29 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto animate-fadeIn w-full max-w-full">
-      <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
         
         {/* Header */}
         <div className="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 tracking-tighter">
-              CV
-            </div>
+          <div className="flex items-center gap-2.5">
+            {logoUrl && !logoFailed ? (
+              <img
+                src={logoUrl}
+                alt="CodeVault Logo"
+                onError={() => setLogoFailed(true)}
+                className="w-7 h-7 rounded-lg object-contain bg-slate-50 border border-slate-200 p-0.5 shrink-0"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shrink-0 tracking-tighter">
+                CV
+              </div>
+            )}
             <div>
               <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-none">
                 {completedOrder ? 'Digital Code Issued' : 'Instant Redeem Code Checkout'}
               </h3>
               <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                {completedOrder ? `Order ID: ${completedOrder.id}` : '24/7 Automated Delivery'}
+                {completedOrder ? `Order ID: ${completedOrder.id}` : 'Instant Wallet Payment & Automated Delivery'}
               </p>
             </div>
           </div>
@@ -163,7 +133,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         {/* Content Body */}
         <div className="overflow-y-auto flex-1">
           {!completedOrder ? (
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
               
               {/* Product Summary */}
               <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-slate-200 space-y-2">
@@ -191,119 +161,37 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
               )}
 
-              {/* Recipient Information */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                  1. Recipient Details
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Your Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Alex Mercer"
-                      value={customerName}
-                      onChange={e => setCustomerName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[40px]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Email Address (Code Delivery) *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="alex@example.com"
-                      value={customerEmail}
-                      onChange={e => setCustomerEmail(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[40px]"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Phone / Whatsapp Number *
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+91 98765 43210"
-                      value={customerPhone}
-                      onChange={e => setCustomerPhone(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[40px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Options (including Wallet!) */}
+              {/* Wallet Payment Method */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                    2. Payment Method
-                  </h4>
-                  {currentUser && (
-                    <span className="text-[11px] font-bold text-slate-500">
-                      Wallet: <strong className="font-mono text-slate-900">₹{walletBalance.toFixed(2)}</strong>
+                <label className="block text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+                  Payment Method
+                </label>
+                
+                <div className="p-3.5 rounded-2xl border border-blue-600 bg-blue-50/80 text-blue-900 flex items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                      <Wallet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-extrabold block text-slate-900">CodeVault Wallet</span>
+                      <span className="text-[11px] text-slate-600 font-mono">Available Balance: ₹{walletBalance.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  {hasEnoughWallet ? (
+                    <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full uppercase">
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-extrabold text-rose-700 bg-rose-100 px-2 py-1 rounded-full uppercase">
+                      Low Balance
                     </span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  
-                  {/* CodeVault Wallet Option */}
-                  {currentUser && (
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('Wallet')}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between gap-2 transition-all ${
-                        paymentMethod === 'Wallet'
-                          ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-xs'
-                          : 'border-slate-200 bg-white text-slate-700 font-medium'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Wallet className={`w-4 h-4 ${paymentMethod === 'Wallet' ? 'text-blue-600' : 'text-slate-400'}`} />
-                        <div>
-                          <span className="text-xs font-bold block">CodeVault Wallet</span>
-                          <span className="text-[10px] text-slate-500 font-mono">Balance: ₹{walletBalance.toFixed(2)}</span>
-                        </div>
-                      </div>
-                      {hasEnoughWallet ? (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Ready</span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">Low</span>
-                      )}
-                    </button>
-                  )}
-
-                  {/* UPI QR Option */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('UPI QR Code')}
-                    className={`p-3 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                      paymentMethod === 'UPI QR Code'
-                        ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-xs'
-                        : 'border-slate-200 bg-white text-slate-700 font-medium'
-                    }`}
-                  >
-                    <QrCode className={`w-4 h-4 ${paymentMethod === 'UPI QR Code' ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <div>
-                      <span className="text-xs font-bold block">Direct UPI QR</span>
-                      <span className="text-[10px] text-slate-500">Scan & Pay</span>
-                    </div>
-                  </button>
-                </div>
-
                 {/* Insufficient wallet alert with direct Deposit button */}
-                {paymentMethod === 'Wallet' && !hasEnoughWallet && (
+                {!hasEnoughWallet && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs flex items-center justify-between text-amber-900">
-                    <span>Insufficient balance (Need ₹{(finalTotal - walletBalance).toFixed(2)} more)</span>
+                    <span className="font-semibold">Need ₹{(finalTotal - walletBalance).toFixed(2)} more in your wallet</span>
                     {onOpenDeposit && (
                       <button
                         type="button"
@@ -311,7 +199,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           onClose();
                           onOpenDeposit();
                         }}
-                        className="px-2.5 py-1 bg-blue-600 text-white font-bold rounded-lg text-[10px] hover:bg-blue-700"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-lg text-xs transition-colors shrink-0"
                       >
                         + Add Money
                       </button>
@@ -320,47 +208,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 )}
               </div>
 
-              {/* Promo Code Input */}
-              <div className="space-y-1.5 pt-1 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-700">
-                  Promo Code (Optional)
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code (e.g. VAULT10)"
-                    value={promoCodeInput}
-                    onChange={e => setPromoCodeInput(e.target.value.toUpperCase())}
-                    className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold uppercase focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[38px]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyPromo}
-                    disabled={isValidatingPromo || !promoCodeInput.trim()}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-all disabled:opacity-50 min-h-[38px]"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {promoMessage && (
-                  <p className={`text-[11px] font-bold ${appliedPromo ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {promoMessage}
-                  </p>
-                )}
-              </div>
-
-              {/* Price Breakdown */}
+              {/* Price Summary */}
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
                 <div className="flex justify-between text-slate-600">
                   <span>Product Price:</span>
-                  <span className="font-mono font-bold">₹{rawTotal.toLocaleString('en-IN')}</span>
+                  <span className="font-mono font-bold">₹{product.price.toLocaleString('en-IN')}</span>
                 </div>
-                {appliedPromo && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
-                    <span>Discount ({appliedPromo.code}):</span>
-                    <span className="font-mono">-₹{appliedPromo.discount.toLocaleString('en-IN')}</span>
-                  </div>
-                )}
                 <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-1.5 border-t border-slate-200">
                   <span>Total Amount:</span>
                   <span className="font-mono text-blue-600 text-base">₹{finalTotal.toLocaleString('en-IN')}</span>
@@ -368,20 +221,20 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               {/* Submit Action */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <button
                   type="submit"
-                  disabled={isSubmitting || (paymentMethod === 'Wallet' && !hasEnoughWallet)}
+                  disabled={isSubmitting || !hasEnoughWallet}
                   className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-sm rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[48px]"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Processing Instant Delivery...</span>
+                      <span>Deducting Wallet & Issuing Code...</span>
                     </>
                   ) : (
                     <>
-                      <span>{paymentMethod === 'Wallet' ? `Pay ₹${finalTotal} with Wallet` : `Confirm Order (₹${finalTotal})`}</span>
+                      <span>PAY ₹{finalTotal.toLocaleString('en-IN')} WITH WALLET</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -398,16 +251,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               <div className="space-y-1">
                 <h4 className="font-extrabold text-xl text-slate-900">Voucher Code Delivered!</h4>
-                <p className="text-xs text-slate-500">
-                  Your Google Play recharge code is ready to redeem.
-                </p>
+                <p className="text-xs text-slate-500">Your digital code is ready below. Copy and redeem instantly.</p>
               </div>
 
               {/* Revealed Code Card */}
-              <div className="bg-slate-900 rounded-2xl p-5 text-white space-y-3 shadow-xl">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-400 block">
-                  GOOGLE PLAY RECHARGE CODE
-                </span>
+              <div className="bg-slate-900 rounded-2xl p-5 text-white space-y-3 shadow-xl text-left">
+                <div className="flex items-center justify-between text-[11px] font-extrabold uppercase tracking-wider text-blue-400">
+                  <span>Digital Redeem Voucher</span>
+                  <span className="text-emerald-400 font-bold">Paid with Wallet</span>
+                </div>
                 
                 <div className="font-mono font-black text-xl sm:text-2xl text-emerald-400 tracking-wider select-all py-2 px-3 bg-white/5 rounded-xl border border-white/10">
                   {completedOrder.fullRedeemCode}

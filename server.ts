@@ -730,7 +730,13 @@ app.get('/api/db', (req, res) => {
 
 app.post('/api/db', (req, res) => {
   try {
-    writeDB(req.body);
+    const existing = readDB();
+    const newDb = req.body || {};
+    if (!newDb.settings) newDb.settings = existing.settings || {};
+    if (existing.settings?.logoUrl && newDb.settings.logoUrl === undefined) {
+      newDb.settings.logoUrl = existing.settings.logoUrl;
+    }
+    writeDB(newDb);
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
