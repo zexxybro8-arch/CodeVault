@@ -1147,7 +1147,7 @@ export const api = {
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
 
     let targetDenom = db.denominations.find(d =>
       d.id === id ||
@@ -1200,7 +1200,7 @@ export const api = {
       }
     }
 
-    saveDB(db);
+    await saveDB(db);
 
     const freshProducts = buildProductsFromDB(db.denominations, db.redeemCodes);
     const updatedProd = freshProducts.find(p =>
@@ -1220,7 +1220,7 @@ export const api = {
   },
 
   async createCategory(cat: Partial<Category>): Promise<Category | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
     if (!cat.name) return null;
     const upper = String(cat.name).toUpperCase().trim();
     if (db.categories.some(c => c.name.toUpperCase() === upper)) {
@@ -1234,23 +1234,23 @@ export const api = {
       displayOrder: cat.displayOrder ? Number(cat.displayOrder) : db.categories.length + 1
     };
     db.categories.push(newCat);
-    saveDB(db);
+    await saveDB(db);
     return newCat;
   },
 
   async updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
     const idx = db.categories.findIndex(c => c.id === id);
     if (idx === -1) return null;
     db.categories[idx] = { ...db.categories[idx], ...updates };
-    saveDB(db);
+    await saveDB(db);
     return db.categories[idx];
   },
 
   async deleteCategory(id: string): Promise<boolean> {
-    const db = getDB();
+    const db = await fetchServerDB();
     db.categories = db.categories.filter(c => c.id !== id);
-    saveDB(db);
+    await saveDB(db);
     return true;
   },
 
@@ -1260,7 +1260,7 @@ export const api = {
   },
 
   async createDenomination(den: Partial<Denomination>): Promise<Denomination | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
     const numVal = parseNumeric(den.value);
     if (numVal <= 0) throw new Error('Valid denomination value is required');
     const newDen: Denomination = {
@@ -1276,23 +1276,23 @@ export const api = {
       displayOrder: den.displayOrder ? Number(den.displayOrder) : db.denominations.length + 1
     };
     db.denominations.push(newDen);
-    saveDB(db);
+    await saveDB(db);
     return newDen;
   },
 
   async updateDenomination(id: string, updates: Partial<Denomination>): Promise<Denomination | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
     const idx = db.denominations.findIndex(d => d.id === id);
     if (idx === -1) return null;
     db.denominations[idx] = { ...db.denominations[idx], ...updates };
-    saveDB(db);
+    await saveDB(db);
     return db.denominations[idx];
   },
 
   async deleteDenomination(id: string): Promise<boolean> {
-    const db = getDB();
+    const db = await fetchServerDB();
     db.denominations = db.denominations.filter(d => d.id !== id);
-    saveDB(db);
+    await saveDB(db);
     return true;
   },
 
@@ -1305,7 +1305,7 @@ export const api = {
     if (!codeData.code || codeData.denomination === undefined) {
       throw new Error('Redeem code and denomination are required');
     }
-    const db = getDB();
+    const db = await fetchServerDB();
     const cleanCode = String(codeData.code).trim().toUpperCase();
     if (db.redeemCodes.some(c => c.code.trim().toUpperCase() === cleanCode)) {
       throw new Error('Duplicate redeem code already exists');
@@ -1328,12 +1328,12 @@ export const api = {
     };
 
     db.redeemCodes.unshift(newCodeItem);
-    saveDB(db);
+    await saveDB(db);
     return newCodeItem;
   },
 
   async updateRedeemCode(id: string, updates: Partial<RedeemCodeItem>): Promise<RedeemCodeItem | null> {
-    const db = getDB();
+    const db = await fetchServerDB();
     const idx = db.redeemCodes.findIndex(c => c.id === id);
     if (idx === -1) {
       throw new Error(`Redeem code with ID "${id}" not found in database.`);
@@ -1358,18 +1358,18 @@ export const api = {
     };
 
     db.redeemCodes[idx] = updatedItem;
-    saveDB(db);
+    await saveDB(db);
     return updatedItem;
   },
 
   async deleteRedeemCode(id: string): Promise<boolean> {
-    const db = getDB();
+    const db = await fetchServerDB();
     const prevCount = db.redeemCodes.length;
     db.redeemCodes = db.redeemCodes.filter(c => c.id !== id);
     if (db.redeemCodes.length === prevCount) {
       throw new Error(`Redeem code with id "${id}" not found.`);
     }
-    saveDB(db);
+    await saveDB(db);
     return true;
   },
 
