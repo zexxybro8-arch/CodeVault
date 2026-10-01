@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShoppingBag, Menu, X, Tag, LogOut, Wallet, Plus,
   User as UserIcon, ChevronDown, Shield, History
@@ -8,6 +8,7 @@ import { User } from '../types';
 interface HeaderProps {
   orderCount: number;
   currentUser: User | null;
+  logoUrl?: string;
   onOpenMyOrders: () => void;
   onOpenAdmin: () => void;
   onOpenRedeem: () => void;
@@ -21,6 +22,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   orderCount,
   currentUser,
+  logoUrl,
   onOpenMyOrders,
   onOpenAdmin,
   onOpenRedeem,
@@ -32,6 +34,11 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoUrl]);
   
   // Discreet 3-tap counter on logo badge for authenticated admin access
   const clickCountRef = useRef(0);
@@ -65,9 +72,18 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg p-0.5 group"
             title="Code Vault (Triple tap for Admin)"
           >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-xs group-hover:bg-blue-700 transition-colors shrink-0 tracking-tighter">
-              CV
-            </div>
+            {logoUrl && !logoFailed ? (
+              <img
+                src={logoUrl}
+                alt="Code Vault Logo"
+                onError={() => setLogoFailed(true)}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-contain bg-slate-50 border border-slate-200/80 p-0.5 shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-xs group-hover:bg-blue-700 transition-colors shrink-0 tracking-tighter">
+                CV
+              </div>
+            )}
             <div className="flex flex-col">
               <span className="font-display font-black text-lg sm:text-xl tracking-tight text-slate-900 leading-none">
                 <span className="text-blue-600">C</span>ode <span className="text-blue-600">V</span>ault

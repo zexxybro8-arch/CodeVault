@@ -6,7 +6,6 @@ import {
   User, DepositAmount, DepositRequest, WalletTransaction
 } from '../types';
 import { Header } from './Header';
-import { Hero } from './Hero';
 import { MainNavigation, MainViewTab } from './MainNavigation';
 import { HowToRedeemView } from './views/HowToRedeemView';
 import { WhyChooseUsView } from './views/WhyChooseUsView';
@@ -25,6 +24,8 @@ import {
 interface AdminPanelProps {
   onLogout: () => void;
   onDataChanged: () => void;
+  logoUrl?: string;
+  onSettingsUpdated?: (settings: MarketplaceSettings) => void;
 }
 
 type AdminTab =
@@ -40,10 +41,97 @@ type AdminTab =
   | 'orders'
   | 'settings';
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged }) => {
+export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged, logoUrl, onSettingsUpdated }) => {
   // Mode switcher: ADMIN PANEL vs USER PREVIEW
   const [viewMode, setViewMode] = useState<'ADMIN' | 'USER_PREVIEW'>('ADMIN');
   const [previewSubTab, setPreviewSubTab] = useState<MainViewTab>('REDEEM CODE');
+  const [adminLogoFailed, setAdminLogoFailed] = useState(false);
+  const [logoPreviewError, setLogoPreviewError] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Data states
+  const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
+
+  // Logo Upload & URL Validation States
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [logoInputUrl, setLogoInputUrl] = useState<string>('');
+  const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
+  const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(false);
+
+  useEffect(() => {
+    setAdminLogoFailed(false);
+  }, [logoUrl]);
+
+  useEffect(() => {
+    if (settings?.logoUrl !== undefined) {
+      setLogoInputUrl(settings.logoUrl || '');
+    }
+  }, [settings?.logoUrl]);
+
+  // Apply Logo URL (Validation)
+  const handleApplyLogoUrl = () => {
+    setUrlValidationError(null);
+    const cleanUrl = logoInputUrl.trim();
+    if (!cleanUrl) {
+      setSettings(prev => prev ? { ...prev, logoUrl: '' } : prev);
+      setLogoPreviewError(false);
+      showToast('success', 'Logo URL cleared. Using default CV badge.');
+      return;
+    }
+
+    setIsValidatingUrl(true);
+    const img = new Image();
+    img.onload = () => {
+      setIsValidatingUrl(false);
+      setLogoPreviewError(false);
+      setUrlValidationError(null);
+      setSettings(prev => prev ? { ...prev, logoUrl: cleanUrl } : prev);
+      showToast('success', 'Logo URL verified & applied to preview!');
+    };
+    img.onerror = () => {
+      setIsValidatingUrl(false);
+      setUrlValidationError('Failed to load image from URL. Please ensure URL is accessible and points to a valid image.');
+      showToast('error', 'Invalid logo image URL.');
+    };
+    img.src = cleanUrl;
+  };
+
+  // Upload Logo from Device (Base64 file reader)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('error', 'File size exceeds 5MB limit.');
+      return;
+    }
+
+    setUrlValidationError(null);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Data = event.target?.result as string;
+      if (base64Data) {
+        setLogoInputUrl(base64Data);
+        setLogoPreviewError(false);
+        setSettings(prev => prev ? { ...prev, logoUrl: base64Data } : prev);
+        showToast('success', 'Image uploaded! Click "SAVE LOGO" to commit changes globally.');
+      }
+    };
+    reader.onerror = () => {
+      showToast('error', 'Error reading image file.');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Reset to Default Logo
+  const handleResetLogo = () => {
+    setLogoInputUrl('');
+    setLogoPreviewError(false);
+    setUrlValidationError(null);
+    setSettings(prev => prev ? { ...prev, logoUrl: '' } : prev);
+    showToast('success', 'Logo reset to default CV badge.');
+  };
 
   // Sidebar Tab
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
@@ -60,7 +148,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   const [products, setProducts] = useState<Product[]>([]);
   const [userProducts, setUserProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // User Detail Modal State
@@ -462,12 +549,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
   };
 
   // --- Settings ---
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!settings) return;
-    await api.updateSettings(settings);
-    showToast('success', 'Admin settings updated successfully.');
-    await loadAdminData();
+    setIsSavingSettings(true);
+    try {
+      const updated = await api.updateSettings(settings);
+      setSettings(updated);
+      showToast('success', 'Platform settings & brand logo saved successfully.');
+      await loadAdminData();
+      onDataChanged();
+      if (onSettingsUpdated) onSettingsUpdated(updated);
+    } catch (err) {
+      showToast('error', 'Failed to save settings.');
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   // Filtered lists
@@ -529,9 +626,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           </button>
           
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-sm">
-              CV
-            </div>
+            {logoUrl && !adminLogoFailed ? (
+              <img
+                src={logoUrl}
+                alt="CodeVault Logo"
+                onError={() => setAdminLogoFailed(true)}
+                className="w-9 h-9 rounded-xl object-contain bg-slate-50 border border-slate-200 p-0.5 shrink-0"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                CV
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-slate-900 text-base leading-none">CodeVault</span>
@@ -1436,9 +1542,158 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
             {/* 11. SETTINGS */}
             {activeTab === 'settings' && settings && (
-              <div className="space-y-4 animate-fadeIn max-w-xl">
+              <div className="space-y-6 animate-fadeIn max-w-2xl">
+                
+                {/* BRANDING / LOGO SETTINGS CARD */}
+                <div className="bg-white p-5 sm:p-7 rounded-3xl border border-slate-200 shadow-2xs space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <div>
+                      <h3 className="font-extrabold text-base sm:text-lg text-slate-900 uppercase tracking-wide">
+                        BRANDING / LOGO SETTINGS
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Customize the website header icon, login page logo & footer across CodeVault
+                      </p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 uppercase shrink-0">
+                      Global Branding
+                    </span>
+                  </div>
+
+                  {/* 1. Header Live Preview Mockup */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                      Header Live Preview Mockup
+                    </label>
+                    <div className="p-4 bg-slate-900/95 rounded-2xl border border-slate-800 text-white shadow-inner">
+                      <div className="flex items-center justify-between">
+                        {/* Logo + Title Combo */}
+                        <div className="flex items-center gap-2.5">
+                          {settings.logoUrl && !logoPreviewError ? (
+                            <img
+                              src={settings.logoUrl}
+                              alt="Brand Logo"
+                              onError={() => setLogoPreviewError(true)}
+                              className="w-9 h-9 rounded-xl object-contain bg-slate-50 border border-slate-200/80 p-0.5 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-xs shrink-0 tracking-tighter">
+                              CV
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <span className="font-display font-black text-lg tracking-tight text-white leading-none">
+                              <span className="text-blue-500">C</span>ode <span className="text-blue-500">V</span>ault
+                            </span>
+                            <span className="text-[9px] font-extrabold tracking-wider uppercase text-slate-400 leading-none mt-1">
+                              PREPAID PLATFORM
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Sample Header Badge */}
+                        <div className="px-3 py-1.5 bg-blue-600 rounded-xl text-xs font-black text-white hidden sm:block">
+                          MY ORDERS
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-medium">
+                      This live mockup displays exactly how your logo appears next to the CodeVault title in the header.
+                    </p>
+                  </div>
+
+                  {/* 2. Logo Source Input Options */}
+                  <div className="space-y-4 pt-1">
+                    
+                    {/* Option A: Logo URL Field + Apply Button */}
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                        Option A: Enter Image URL
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          placeholder="https://example.com/logo.png"
+                          value={logoInputUrl}
+                          onChange={e => {
+                            setLogoInputUrl(e.target.value);
+                            setUrlValidationError(null);
+                          }}
+                          className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyLogoUrl}
+                          disabled={isValidatingUrl}
+                          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 active:bg-black text-white font-extrabold text-xs rounded-xl transition-colors cursor-pointer shrink-0"
+                        >
+                          {isValidatingUrl ? 'Testing...' : 'Apply Logo'}
+                        </button>
+                      </div>
+                      {urlValidationError && (
+                        <p className="text-[11px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{urlValidationError}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="relative flex py-1 items-center">
+                      <div className="flex-grow border-t border-slate-200"></div>
+                      <span className="flex-shrink mx-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">OR</span>
+                      <div className="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    {/* Option B: Device File Upload */}
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                        Option B: Upload Image File from Device
+                      </label>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full py-3 px-4 bg-blue-50/80 hover:bg-blue-100 border-2 border-dashed border-blue-300 rounded-2xl text-blue-700 font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer group"
+                      >
+                        <Upload className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform shrink-0" />
+                        <span>Upload File from Device (PNG, JPG, SVG, WebP)</span>
+                      </button>
+                    </div>
+
+                  </div>
+
+                  {/* 3. Action Buttons (Save Logo & Reset) */}
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-4 gap-3 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={handleResetLogo}
+                      className="px-4 py-2.5 bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-extrabold text-xs rounded-xl border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer"
+                    >
+                      Reset to Default Logo
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSettings()}
+                      disabled={isSavingSettings}
+                      className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-black text-xs rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>{isSavingSettings ? 'Saving Logo...' : 'SAVE LOGO'}</span>
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* PLATFORM SETTINGS */}
                 <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-                  <h3 className="font-extrabold text-base text-slate-900">Platform Settings</h3>
+                  <h3 className="font-extrabold text-base text-slate-900 uppercase tracking-wider">PLATFORM SETTINGS</h3>
                   <form onSubmit={handleSaveSettings} className="space-y-3.5 text-xs font-semibold">
                     <div>
                       <label className="block text-slate-600 mb-1">Platform Title</label>
@@ -1483,12 +1738,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
 
                     <button
                       type="submit"
+                      disabled={isSavingSettings}
                       className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl shadow-xs"
                     >
-                      Save Settings
+                      {isSavingSettings ? 'Saving...' : 'Save Settings'}
                     </button>
                   </form>
                 </div>
+
               </div>
             )}
 
@@ -1510,6 +1767,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           </div>
 
           <Header
+            logoUrl={settings?.logoUrl || logoUrl}
             orderCount={orders.length}
             currentUser={users[0] || null}
             onOpenMyOrders={() => alert('Orders opened in preview')}
@@ -1529,7 +1787,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
           <main className="flex-1">
             {previewSubTab === 'REDEEM CODE' && (
               <div>
-                <Hero onExploreCards={() => {}} onRedeemCode={() => {}} />
                 <Marketplace
                   products={userProducts}
                   categories={categories}
@@ -1542,7 +1799,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged 
             {previewSubTab === 'WHY CHOOSE US' && <WhyChooseUsView />}
           </main>
 
-          <Footer onOpenAdmin={() => setViewMode('ADMIN')} onOpenRedeem={() => {}} onOpenMyOrders={() => {}} />
+          <Footer logoUrl={settings?.logoUrl || logoUrl} onOpenAdmin={() => setViewMode('ADMIN')} onOpenRedeem={() => {}} onOpenMyOrders={() => {}} />
         </div>
       )}
 

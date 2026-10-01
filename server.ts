@@ -47,21 +47,7 @@ function getInitialDB() {
       { id: 'code-104', code: 'GPRC-6632-1B5K-88M9', category: 'GOOGLE PLAY', denomination: 350, price: 6000, balance: 6000, status: 'Available', note: 'Special promo batch', createdAt: new Date().toISOString() }
     ],
     products: [],
-    orders: [
-      {
-        id: 'BX-89214',
-        customerName: 'Aarav Sharma',
-        customerEmail: 'aarav.sharma@gmail.com',
-        customerPhone: '+91 98765 43210',
-        items: [{ productId: 'code-101', productName: 'Google Play Recharge Code', category: 'GOOGLE PLAY', denomination: 500, price: 450, maskedCode: '•••• •••• 8K4P 29X7' }],
-        totalAmount: 450,
-        status: 'Completed',
-        paymentMethod: 'UPI / QR',
-        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-        fullRedeemCode: 'GPRC-9012-8K4P-29X7'
-      }
-    ],
+    orders: [],
     promoCodes: [
       { code: 'VAULT10', discountType: 'percentage', discountValue: 10, active: true },
       { code: 'SAVE50', discountType: 'fixed', discountValue: 50, active: true }
@@ -73,7 +59,8 @@ function getInitialDB() {
       maintenanceMode: false,
       defaultAvailability: true,
       defaultUpiId: 'codevault.pay@okaxis',
-      defaultUpiName: 'CodeVault Official Payment'
+      defaultUpiName: 'CodeVault Official Payment',
+      logoUrl: ''
     },
     adminPin: '9000',
     users: [
@@ -649,7 +636,65 @@ app.post('/api/wallet/pay', (req, res) => {
   }
 });
 
-// 8. Admin Login Verification (PIN/Password)
+// 8. Orders Management API
+app.get('/api/orders', (req, res) => {
+  try {
+    const { userId, email, orderId } = req.query;
+    const db = readDB();
+    let orders = db.orders || [];
+    if (userId) {
+      orders = orders.filter((o: any) => o.userId === userId);
+    } else if (email) {
+      const em = String(email).toLowerCase();
+      orders = orders.filter((o: any) => o.customerEmail?.toLowerCase() === em);
+    } else if (orderId) {
+      const oid = String(orderId).toLowerCase();
+      orders = orders.filter((o: any) => o.id?.toLowerCase().includes(oid));
+    }
+    res.json({ success: true, orders });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/orders', (req, res) => {
+  try {
+    const orderData = req.body;
+    const db = readDB();
+    if (!db.orders) db.orders = [];
+    db.orders.unshift(orderData);
+    writeDB(db);
+    res.json({ success: true, order: orderData });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 9. Website Branding & Platform Settings API
+app.get('/api/settings', (req, res) => {
+  try {
+    const db = readDB();
+    const { adminPin, ...publicSettings } = db.settings || {};
+    res.json({ success: true, settings: publicSettings });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.post('/api/settings', (req, res) => {
+  try {
+    const updates = req.body;
+    const db = readDB();
+    db.settings = { ...(db.settings || {}), ...updates };
+    writeDB(db);
+    const { adminPin, ...publicSettings } = db.settings;
+    res.json({ success: true, settings: publicSettings });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// 10. Admin Login Verification (PIN/Password)
 app.post('/api/admin/login', (req, res) => {
   try {
     const { pin, password } = req.body;

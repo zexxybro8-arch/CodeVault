@@ -7,14 +7,21 @@ import { User } from '../types';
 interface UserLoginPageProps {
   onLoginSuccess: (user: User) => void;
   onOpenAdminLogin?: () => void;
+  logoUrl?: string;
 }
 
 export const UserLoginPage: React.FC<UserLoginPageProps> = ({
   onLoginSuccess,
-  onOpenAdminLogin
+  onOpenAdminLogin,
+  logoUrl
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoUrl]);
 
   // Discreet tap counter on brand badge for authorized admin access
   const clickCountRef = useRef(0);
@@ -123,9 +130,18 @@ export const UserLoginPage: React.FC<UserLoginPageProps> = ({
             className="inline-flex focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-2xl mx-auto group cursor-pointer transition-transform active:scale-95"
             title="CodeVault"
           >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-md shadow-blue-600/25 group-hover:bg-blue-700 transition-colors tracking-tighter">
-              CV
-            </div>
+            {logoUrl && !logoFailed ? (
+              <img
+                src={logoUrl}
+                alt="CodeVault Logo"
+                onError={() => setLogoFailed(true)}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-contain bg-white p-1 border border-slate-200 shadow-md shadow-slate-200/50"
+              />
+            ) : (
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-md shadow-blue-600/25 group-hover:bg-blue-700 transition-colors tracking-tighter">
+                CV
+              </div>
+            )}
           </button>
 
           {/* Platform Title */}

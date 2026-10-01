@@ -20,7 +20,6 @@ export const DepositFlowModal: React.FC<DepositFlowModalProps> = ({
   const [step, setStep] = useState<'SELECT_AMOUNT' | 'PAYMENT_QR' | 'CONFIRMATION'>('SELECT_AMOUNT');
   const [depositAmounts, setDepositAmounts] = useState<DepositAmount[]>([]);
   const [selectedAmount, setSelectedAmount] = useState<DepositAmount | null>(null);
-  const [customAmount, setCustomAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   // Payment Session & 5-Minute Timer
@@ -101,26 +100,7 @@ export const DepositFlowModal: React.FC<DepositFlowModalProps> = ({
 
   // Start Payment Session
   const handleProceedToPayment = () => {
-    if (!selectedAmount && !customAmount) return;
-
-    let targetAmt = selectedAmount;
-    const numCustom = Number(customAmount);
-    if (numCustom && numCustom > 0) {
-      targetAmt = {
-        id: `dep_amt_custom_${numCustom}`,
-        amount: numCustom,
-        qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=${numCustom}&cu=INR`,
-        upiId: 'codevault.pay@okaxis',
-        receiverName: `CodeVault Official (₹${numCustom})`,
-        enabled: true,
-        displayOrder: 99,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      setSelectedAmount(targetAmt);
-    }
-
-    if (!targetAmt) return;
+    if (!selectedAmount) return;
 
     const newSessionId = `sess_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
     const expiry = Date.now() + 300 * 1000; // 5 minutes exactly
@@ -133,8 +113,8 @@ export const DepositFlowModal: React.FC<DepositFlowModalProps> = ({
 
     api.savePaymentSession({
       sessionId: newSessionId,
-      amount: targetAmt.amount,
-      depositAmountId: targetAmt.id,
+      amount: selectedAmount.amount,
+      depositAmountId: selectedAmount.id,
       expiresAt: expiry
     });
 
@@ -224,15 +204,12 @@ export const DepositFlowModal: React.FC<DepositFlowModalProps> = ({
               
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {depositAmounts.map(amt => {
-                  const isSelected = selectedAmount?.id === amt.id && !customAmount;
+                  const isSelected = selectedAmount?.id === amt.id;
                   return (
                     <button
                       key={amt.id}
                       type="button"
-                      onClick={() => {
-                        setSelectedAmount(amt);
-                        setCustomAmount('');
-                      }}
+                      onClick={() => setSelectedAmount(amt)}
                       className={`p-3 rounded-2xl border-2 font-mono font-black text-sm transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer min-h-[56px] ${
                         isSelected
                           ? 'border-blue-600 bg-blue-50/80 text-blue-700 shadow-sm'
@@ -247,35 +224,17 @@ export const DepositFlowModal: React.FC<DepositFlowModalProps> = ({
               </div>
             </div>
 
-            {/* Custom Amount option */}
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 mb-1">Or Enter Other Amount (₹)</label>
-              <div className="relative">
-                <span className="absolute left-3 top-2.5 font-mono font-bold text-slate-400 text-sm">₹</span>
-                <input
-                  type="number"
-                  placeholder="e.g. 1500"
-                  value={customAmount}
-                  onChange={e => {
-                    setCustomAmount(e.target.value);
-                    if (e.target.value) setSelectedAmount(null);
-                  }}
-                  className="w-full pl-8 pr-3 py-2.5 border border-slate-200 rounded-xl font-mono font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
             {/* Summary preview */}
             <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs flex items-center justify-between">
               <span className="font-bold text-slate-600">Deposit Total:</span>
               <span className="font-mono font-black text-base text-blue-600">
-                ₹{customAmount ? Number(customAmount) || 0 : (selectedAmount?.amount || 0)}
+                ₹{selectedAmount?.amount || 0}
               </span>
             </div>
 
             <button
               onClick={handleProceedToPayment}
-              disabled={(!selectedAmount && !customAmount) || isLoading}
+              disabled={!selectedAmount || isLoading}
               className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-extrabold text-sm rounded-2xl shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 min-h-[48px]"
             >
               <span>CONTINUE TO PAYMENT</span>

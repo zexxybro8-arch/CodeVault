@@ -194,4 +194,5 @@ export interface MarketplaceSettings {
   adminPin?: string;
   defaultUpiId?: string;
   defaultUpiName?: string;
+  logoUrl?: string;
 }

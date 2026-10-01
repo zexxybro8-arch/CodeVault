@@ -20,7 +20,7 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | OrderStatus>('All');
-  const [orders, setOrders] = useState<Order[]>(recentOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -29,18 +29,21 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
     try {
       const q = searchQuery.trim();
       let res: Order[] = [];
+      const activeUser = customerSession || api.getCurrentUser();
+
       if (q.includes('@')) {
         res = await api.getOrders({ email: q });
       } else if (q.startsWith('CV-') || q.startsWith('BX-') || q.length >= 4) {
         res = await api.getOrders({ orderId: q });
-      } else if (customerSession?.email) {
-        res = await api.getOrders({ email: customerSession.email });
+      } else if (activeUser) {
+        res = await api.getOrders({ userId: activeUser.id, email: activeUser.email });
       } else {
-        res = await api.getOrders();
+        res = [];
       }
-      setOrders(res.length ? res : recentOrders);
+      setOrders(res || []);
     } catch (err) {
       console.error('Fetch user orders error', err);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +59,8 @@ export const MyOrdersModal: React.FC<MyOrdersModalProps> = ({
         fetchUserOrders();
       }, 400);
       return () => clearTimeout(timer);
-    } else if (!searchQuery.trim() && recentOrders.length > 0) {
-      setOrders(recentOrders);
+    } else if (!searchQuery.trim()) {
+      fetchUserOrders();
     }
   }, [searchQuery]);
 

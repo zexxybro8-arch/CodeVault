@@ -1,0 +1,457 @@
+{
+  "categories": [
+    {
+      "id": "cat-1",
+      "name": "GOOGLE PLAY",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/888/888857.png",
+      "enabled": true,
+      "displayOrder": 1
+    },
+    {
+      "id": "cat-2",
+      "name": "APPLE ITUNES",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/888/888841.png",
+      "enabled": true,
+      "displayOrder": 2
+    },
+    {
+      "id": "cat-3",
+      "name": "STEAM WALLET",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/5969/5969018.png",
+      "enabled": true,
+      "displayOrder": 3
+    },
+    {
+      "id": "cat-4",
+      "name": "AMAZON PAY",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/5968/5968144.png",
+      "enabled": true,
+      "displayOrder": 4
+    },
+    {
+      "id": "cat-5",
+      "name": "FREE FIRE MAX",
+      "iconUrl": "https://cdn-icons-png.flaticon.com/512/3408/3408545.png",
+      "enabled": true,
+      "displayOrder": 5
+    }
+  ],
+  "denominations": [
+    {
+      "id": "den-1",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 120,
+      "label": "₹120",
+      "price": 120,
+      "balance": 120,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 1
+    },
+    {
+      "id": "den-2",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 150,
+      "label": "₹150",
+      "price": 150,
+      "balance": 150,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 2
+    },
+    {
+      "id": "den-3",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 200,
+      "label": "₹200",
+      "price": 3000,
+      "balance": 3000,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 3
+    },
+    {
+      "id": "den-4",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 300,
+      "label": "₹300",
+      "price": 300,
+      "balance": 300,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 4
+    },
+    {
+      "id": "den-5",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 350,
+      "label": "₹350",
+      "price": 6000,
+      "balance": 6000,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 5
+    },
+    {
+      "id": "den-6",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 500,
+      "label": "₹500",
+      "price": 450,
+      "balance": 500,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 6
+    },
+    {
+      "id": "den-7",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 700,
+      "label": "₹700",
+      "price": 700,
+      "balance": 700,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 7
+    },
+    {
+      "id": "den-8",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 900,
+      "label": "₹900",
+      "price": 900,
+      "balance": 900,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 8
+    },
+    {
+      "id": "den-9",
+      "categoryId": "cat-1",
+      "categoryName": "GOOGLE PLAY",
+      "value": 1000,
+      "label": "₹1000",
+      "price": 920,
+      "balance": 1000,
+      "name": "Google Play Recharge Code",
+      "enabled": true,
+      "displayOrder": 9
+    }
+  ],
+  "redeemCodes": [
+    {
+      "id": "code-101",
+      "code": "GPRC-9012-8K4P-29X7",
+      "category": "GOOGLE PLAY",
+      "denomination": 500,
+      "price": 450,
+      "balance": 500,
+      "status": "Available",
+      "note": "Standard stock batch #1",
+      "createdAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "code-102",
+      "code": "GPRC-7741-3L9M-58K2",
+      "category": "GOOGLE PLAY",
+      "denomination": 1000,
+      "price": 920,
+      "balance": 1000,
+      "status": "Available",
+      "note": "Standard stock batch #1",
+      "createdAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "code-103",
+      "code": "GPRC-4421-9X8V-11P0",
+      "category": "GOOGLE PLAY",
+      "denomination": 200,
+      "price": 3000,
+      "balance": 3000,
+      "status": "Available",
+      "note": "Special edition",
+      "createdAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "code-104",
+      "code": "GPRC-6632-1B5K-88M9",
+      "category": "GOOGLE PLAY",
+      "denomination": 350,
+      "price": 6000,
+      "balance": 6000,
+      "status": "Available",
+      "note": "Special promo batch",
+      "createdAt": "2026-09-30T18:10:37.888Z"
+    }
+  ],
+  "products": [],
+  "orders": [],
+  "promoCodes": [
+    {
+      "code": "VAULT10",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "active": true
+    },
+    {
+      "code": "SAVE50",
+      "discountType": "fixed",
+      "discountValue": 50,
+      "active": true
+    }
+  ],
+  "settings": {
+    "title": "Code Vault - Premium Prepaid Cards",
+    "description": "The Most Trusted Instant Digital Codes & Prepaid Marketplace",
+    "currency": "INR",
+    "maintenanceMode": false,
+    "defaultAvailability": true,
+    "defaultUpiId": "codevault.pay@okaxis",
+    "defaultUpiName": "CodeVault Official Payment"
+  },
+  "adminPin": "9000",
+  "users": [
+    {
+      "id": "usr_google_1092830192",
+      "googleId": "10928301923847192834",
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma@gmail.com",
+      "profileImage": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "walletBalance": 1250,
+      "status": "active",
+      "createdAt": "2026-09-23T18:10:37.888Z",
+      "totalDeposits": 1500
+    },
+    {
+      "id": "usr_google_1082390123",
+      "googleId": "10823901238491823912",
+      "name": "Priya Patel",
+      "email": "priya.patel.tech@gmail.com",
+      "profileImage": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "walletBalance": 450,
+      "status": "active",
+      "createdAt": "2026-09-27T18:10:37.888Z",
+      "totalDeposits": 500
+    },
+    {
+      "id": "usr_google_1790793164224_7533",
+      "googleId": "1048590724439341330",
+      "name": "Ananya Iyer",
+      "email": "ananya.iyer99@gmail.com",
+      "profileImage": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "walletBalance": 0,
+      "status": "active",
+      "createdAt": "2026-09-30T18:32:44.224Z",
+      "totalDeposits": 0
+    },
+    {
+      "id": "usr_google_1790793371082_2415",
+      "googleId": "1095944447434219740",
+      "name": "Aarav Sharma",
+      "email": "aarav.sharma93@gmail.com",
+      "profileImage": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "walletBalance": 0,
+      "status": "active",
+      "createdAt": "2026-09-30T18:36:11.082Z",
+      "totalDeposits": 0
+    },
+    {
+      "id": "usr_google_1790793692089_3302",
+      "googleId": "Sn7z9UlGivQAqEbUws4IbUBamI33",
+      "name": "Sayan Moi",
+      "email": "sayan0891484@gmail.com",
+      "profileImage": "https://lh3.googleusercontent.com/a/ACg8ocJYinOf0Zh_2fQCwiHXKP8r2_U02tmG8FM2wAgSZYu_G77xxQ=s96-c",
+      "walletBalance": 0,
+      "status": "active",
+      "createdAt": "2026-09-30T18:41:32.089Z",
+      "totalDeposits": 0
+    }
+  ],
+  "depositAmounts": [
+    {
+      "id": "dep_amt_200",
+      "amount": 200,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=200&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹200)",
+      "enabled": true,
+      "displayOrder": 1,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_300",
+      "amount": 300,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=300&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹300)",
+      "enabled": true,
+      "displayOrder": 2,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_350",
+      "amount": 350,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=350&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹350)",
+      "enabled": true,
+      "displayOrder": 3,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_400",
+      "amount": 400,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=400&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹400)",
+      "enabled": true,
+      "displayOrder": 4,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_500",
+      "amount": 500,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=500&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹500)",
+      "enabled": true,
+      "displayOrder": 5,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_700",
+      "amount": 700,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=700&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹700)",
+      "enabled": true,
+      "displayOrder": 6,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    },
+    {
+      "id": "dep_amt_1000",
+      "amount": 1000,
+      "qrUrl": "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=codevault.pay@okaxis&pn=CodeVault%20Official&am=1000&cu=INR",
+      "upiId": "codevault.pay@okaxis",
+      "receiverName": "CodeVault Official (₹1000)",
+      "enabled": true,
+      "displayOrder": 7,
+      "createdAt": "2026-09-30T18:10:37.888Z",
+      "updatedAt": "2026-09-30T18:10:37.888Z"
+    }
+  ],
+  "deposits": [
+    {
+      "id": "DEP-51980",
+      "userId": "usr_google_1790793692089_3302",
+      "userName": "Sayan Moi",
+      "userEmail": "sayan0891484@gmail.com",
+      "userProfileImage": "https://lh3.googleusercontent.com/a/ACg8ocJYinOf0Zh_2fQCwiHXKP8r2_U02tmG8FM2wAgSZYu_G77xxQ=s96-c",
+      "amount": 5556,
+      "depositAmountId": "dep_amt_custom_5556",
+      "paymentSessionId": "sess_1790794235224_7824",
+      "utrNumber": "566767676767",
+      "screenshotUrl": "",
+      "status": "PENDING",
+      "createdAt": "2026-09-30T18:50:51.019Z",
+      "expiresAt": "2026-09-30T18:55:51.019Z"
+    },
+    {
+      "id": "DEP-83039",
+      "userId": "usr_google_1790793692089_3302",
+      "userName": "Sayan Moi",
+      "userEmail": "sayan0891484@gmail.com",
+      "userProfileImage": "https://lh3.googleusercontent.com/a/ACg8ocJYinOf0Zh_2fQCwiHXKP8r2_U02tmG8FM2wAgSZYu_G77xxQ=s96-c",
+      "amount": 200,
+      "depositAmountId": "dep_amt_200",
+      "paymentSessionId": "sess_1790794174959_8374",
+      "utrNumber": "Y Tcxrxrx",
+      "screenshotUrl": "",
+      "status": "PENDING",
+      "createdAt": "2026-09-30T18:49:40.749Z",
+      "expiresAt": "2026-09-30T18:54:40.749Z"
+    },
+    {
+      "id": "DEP-78192",
+      "userId": "usr_google_1092830192",
+      "userName": "Aarav Sharma",
+      "userEmail": "aarav.sharma@gmail.com",
+      "userProfileImage": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "amount": 500,
+      "depositAmountId": "dep_amt_500",
+      "paymentSessionId": "sess_109238491823",
+      "utrNumber": "429183921029",
+      "status": "APPROVED",
+      "createdAt": "2026-09-30T13:10:37.888Z",
+      "expiresAt": "2026-09-30T13:15:37.888Z",
+      "approvedAt": "2026-09-30T13:22:37.888Z",
+      "approvedBy": "Admin"
+    },
+    {
+      "id": "DEP-89102",
+      "userId": "usr_google_1082390123",
+      "userName": "Priya Patel",
+      "userEmail": "priya.patel.tech@gmail.com",
+      "userProfileImage": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+      "amount": 350,
+      "depositAmountId": "dep_amt_350",
+      "paymentSessionId": "sess_891029384712",
+      "utrNumber": "519283746192",
+      "status": "PENDING",
+      "createdAt": "2026-09-30T18:08:37.888Z",
+      "expiresAt": "2026-09-30T18:13:37.888Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TXN-1001",
+      "userId": "usr_google_1092830192",
+      "type": "Deposit",
+      "amount": 500,
+      "balanceBefore": 750,
+      "balanceAfter": 1250,
+      "referenceId": "DEP-78192",
+      "description": "Wallet Deposit via UPI QR",
+      "status": "Approved",
+      "createdAt": "2026-09-30T13:22:37.888Z"
+    },
+    {
+      "id": "TXN-1002",
+      "userId": "usr_google_1082390123",
+      "type": "Deposit",
+      "amount": 500,
+      "balanceBefore": 0,
+      "balanceAfter": 500,
+      "referenceId": "DEP-66123",
+      "description": "Wallet Deposit via UPI QR",
+      "status": "Approved",
+      "createdAt": "2026-09-28T18:10:37.888Z"
+    },
+    {
+      "id": "TXN-1003",
+      "userId": "usr_google_1082390123",
+      "type": "Purchase",
+      "amount": -50,
+      "balanceBefore": 500,
+      "balanceAfter": 450,
+      "referenceId": "BX-89210",
+      "description": "Voucher Purchase #BX-89210",
+      "status": "Completed",
+      "createdAt": "2026-09-29T18:10:37.888Z"
+    }
+  ]
+}

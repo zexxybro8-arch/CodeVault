@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Product, Category, Order, User } from './types';
+import { Product, Category, Order, User, MarketplaceSettings } from './types';
 import { api } from './services/api';
 import { Header } from './components/Header';
 import { MainNavigation, MainViewTab } from './components/MainNavigation';
@@ -23,6 +23,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [settings, setSettings] = useState<MarketplaceSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Normal User Session State
@@ -58,17 +59,19 @@ export default function App() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [pRes, cRes, oRes] = await Promise.all([
+      const freshUser = api.getCurrentUser();
+      setCurrentUser(freshUser);
+
+      const [pRes, cRes, oRes, sRes] = await Promise.all([
         api.getProducts({ forAdmin: false }),
         api.getCategories(),
-        api.getOrders()
+        freshUser ? api.getOrders({ userId: freshUser.id, email: freshUser.email }) : Promise.resolve([]),
+        api.getSettings()
       ]);
       setProducts(pRes);
       setCategories(cRes);
-      setRecentOrders(oRes);
-      
-      const freshUser = api.getCurrentUser();
-      setCurrentUser(freshUser);
+      setRecentOrders(oRes || []);
+      if (sRes) setSettings(sRes);
     } catch (err) {
       console.error('Error initializing application data', err);
     } finally {
@@ -85,7 +88,15 @@ export default function App() {
     const handleLocationChange = () => {
       const userActive = api.isUserLoggedIn();
       setIsUserLoggedIn(userActive);
-      setCurrentUser(api.getCurrentUser());
+      const fresh = api.getCurrentUser();
+      setCurrentUser(fresh);
+      if (fresh) {
+        api.getOrders({ userId: fresh.id, email: fresh.email }).then(orders => {
+          setRecentOrders(orders || []);
+        });
+      } else {
+        setRecentOrders([]);
+      }
 
       if (typeof window !== 'undefined') {
         const hash = window.location.hash;
@@ -118,6 +129,7 @@ export default function App() {
     api.clearUserSession();
     setCurrentUser(null);
     setIsUserLoggedIn(false);
+    setRecentOrders([]);
 
     // 2. Ensure Admin token is cleared as well
     api.clearAdminToken();
@@ -160,6 +172,8 @@ export default function App() {
   if (showAdminPanel && isAdminLoggedIn) {
     return (
       <AdminPanel
+        logoUrl={settings?.logoUrl}
+        onSettingsUpdated={setSettings}
         onLogout={() => {
           api.clearAdminToken();
           setIsAdminLoggedIn(false);
@@ -180,6 +194,7 @@ export default function App() {
   if (!isUserLoggedIn || !currentUser) {
     return (
       <UserLoginPage
+        logoUrl={settings?.logoUrl}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
           setIsUserLoggedIn(true);
@@ -197,6 +212,7 @@ export default function App() {
       
       {/* 1. HEADER (Pure User View) */}
       <Header
+        logoUrl={settings?.logoUrl}
         orderCount={recentOrders.length}
         currentUser={currentUser}
         onOpenMyOrders={() => setShowMyOrdersModal(true)}
@@ -238,6 +254,7 @@ export default function App() {
 
       {/* 4. FOOTER */}
       <Footer
+        logoUrl={settings?.logoUrl}
         onOpenAdmin={() => setShowAdminPanel(true)}
         onOpenRedeem={() => setShowRedeemModal(true)}
         onOpenMyOrders={() => setShowMyOrdersModal(true)}

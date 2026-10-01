@@ -444,7 +444,8 @@ const INITIAL_SETTINGS: MarketplaceSettings = {
   defaultAvailability: true,
   defaultUpiId: 'codevault.pay@okaxis',
   defaultUpiName: 'CodeVault Official Payment',
-  adminPin: '9000'
+  adminPin: '9000',
+  logoUrl: ''
 };
 
 function getDB(): DatabaseSchema {
@@ -1362,16 +1363,40 @@ export const api = {
   },
 
   async getOrders(filter?: { email?: string; orderId?: string; userId?: string }): Promise<Order[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filter?.userId) params.append('userId', filter.userId);
+      if (filter?.email) params.append('email', filter.email);
+      if (filter?.orderId) params.append('orderId', filter.orderId);
+
+      const url = params.toString() ? `/api/orders?${params.toString()}` : '/api/orders';
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders)) {
+          return data.orders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }
+      }
+    } catch {}
+
     const db = getDB();
-    let list = db.orders;
-    if (filter?.email) {
-      list = list.filter(o => o.customerEmail.toLowerCase().includes(filter.email!.toLowerCase()));
-    }
-    if (filter?.orderId) {
-      list = list.filter(o => o.id.toLowerCase().includes(filter.orderId!.toLowerCase()));
-    }
+    let list = db.orders || [];
+    const token = this.getAdminToken();
+    const isAdmin = token === 'codevault_admin_token_sec_2026';
+    const currentUser = this.getCurrentUser();
+
     if (filter?.userId) {
       list = list.filter(o => o.userId === filter.userId);
+    } else if (filter?.email) {
+      list = list.filter(o => o.customerEmail.toLowerCase().includes(filter.email!.toLowerCase()));
+    } else if (filter?.orderId) {
+      list = list.filter(o => o.id.toLowerCase().includes(filter.orderId!.toLowerCase()));
+    } else if (!isAdmin) {
+      if (currentUser) {
+        list = list.filter(o => o.userId === currentUser.id || o.customerEmail.toLowerCase() === currentUser.email.toLowerCase());
+      } else {
+        list = [];
+      }
     }
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
@@ -1400,12 +1425,13 @@ export const api = {
   },
 
   async createOrder(orderData: Partial<Order>): Promise<Order> {
+    const currentUser = this.getCurrentUser();
     const db = getDB();
     const newOrder: Order = {
-      id: `BX-${Math.floor(10000 + Math.random() * 90000)}`,
-      userId: orderData.userId,
-      customerName: orderData.customerName || 'Customer',
-      customerEmail: orderData.customerEmail || 'customer@example.com',
+      id: `CV-${Math.floor(10000 + Math.random() * 90000)}`,
+      userId: orderData.userId || currentUser?.id,
+      customerName: orderData.customerName || currentUser?.name || 'Customer',
+      customerEmail: orderData.customerEmail || currentUser?.email || 'customer@example.com',
       customerPhone: orderData.customerPhone || '',
       items: orderData.items || [],
       totalAmount: orderData.totalAmount || 0,
@@ -1426,10 +1452,34 @@ export const api = {
 
     db.orders.unshift(newOrder);
     saveDB(db);
+
+    try {
+      fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder)
+      }).catch(() => {});
+    } catch {}
+
     return newOrder;
   },
 
   async getSettings(): Promise<MarketplaceSettings | null> {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.settings) {
+          const db = getDB();
+          db.settings = { ...db.settings, ...data.settings };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(db));
+          }
+          return data.settings as MarketplaceSettings;
+        }
+      }
+    } catch {}
+
     const db = getDB();
     const { adminPin, ...publicSettings } = db.settings;
     return publicSettings as MarketplaceSettings;
@@ -1439,6 +1489,21 @@ export const api = {
     const db = getDB();
     db.settings = { ...db.settings, ...updates };
     saveDB(db);
+
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.settings) {
+          return data.settings as MarketplaceSettings;
+        }
+      }
+    } catch {}
+
     return db.settings;
   },
 

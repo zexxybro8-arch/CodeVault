@@ -128,7 +128,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   }, [products, searchQuery, selectedCategory, selectedDenomination, sortBy]);
 
   return (
-    <section id="marketplace" className="py-6 sm:py-8 bg-white min-h-[500px] w-full max-w-full overflow-x-hidden">
+    <section id="marketplace" className="pt-4 sm:pt-6 pb-12 bg-white min-h-[500px] w-full max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         
         {/* Search, Filter & Sort Controls Area */}
