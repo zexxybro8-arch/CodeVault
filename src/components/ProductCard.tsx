@@ -11,7 +11,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onBuyNow }) => {
   const [copied, setCopied] = useState(false);
   const isOutOfStock = (product.stock ?? 0) <= 0;
-  const codeBalance = product.balance;
+  const codeBalance = product.balance !== undefined ? product.balance : product.price;
 
   const handleCopyMaskedCode = () => {
     if (isOutOfStock) return;

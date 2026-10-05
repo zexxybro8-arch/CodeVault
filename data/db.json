@@ -44,7 +44,7 @@
       "value": 120,
       "label": "₹120",
       "price": 120,
-      "balance": 1800,
+      "balance": 120,
       "name": "Google Play Recharge Code",
       "enabled": true,
       "displayOrder": 1
@@ -56,7 +56,7 @@
       "value": 150,
       "label": "₹150",
       "price": 150,
-      "balance": 2500,
+      "balance": 150,
       "name": "Google Play Recharge Code",
       "enabled": true,
       "displayOrder": 2
@@ -67,7 +67,7 @@
       "categoryName": "GOOGLE PLAY",
       "value": 200,
       "label": "₹200",
-      "price": 200,
+      "price": 3000,
       "balance": 3000,
       "name": "Google Play Recharge Code",
       "enabled": true,
@@ -80,7 +80,7 @@
       "value": 300,
       "label": "₹300",
       "price": 300,
-      "balance": 4500,
+      "balance": 300,
       "name": "Google Play Recharge Code",
       "enabled": true,
       "displayOrder": 4

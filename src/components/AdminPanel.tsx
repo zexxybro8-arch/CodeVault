@@ -179,9 +179,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged,
   const [showDenomModal, setShowDenomModal] = useState(false);
   const [editingDenom, setEditingDenom] = useState<Denomination | null>(null);
   const [denomCategory, setDenomCategory] = useState('GOOGLE PLAY');
-  const [denomValue, setDenomValue] = useState('120');
-  const [denomPrice, setDenomPrice] = useState('120');
-  const [denomBalance, setDenomBalance] = useState('1800');
+  const [denomValue, setDenomValue] = useState('500');
 
   // Product Modal
   const [showProductModal, setShowProductModal] = useState(false);
@@ -438,23 +436,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged,
   const handleSaveDenomination = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseNumeric(denomValue);
-    const pr = parseNumeric(denomPrice, val);
-    const bal = parseNumeric(denomBalance, val);
     if (val <= 0) return;
     if (editingDenom) {
       await api.updateDenomination(editingDenom.id, {
         categoryName: denomCategory,
         value: val,
-        price: pr,
-        balance: bal,
         label: `₹${val}`
       });
     } else {
       await api.createDenomination({
         categoryName: denomCategory,
         value: val,
-        price: pr,
-        balance: bal,
         label: `₹${val}`,
         enabled: true
       });
@@ -463,7 +455,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged,
     setEditingDenom(null);
     await loadAdminData();
     onDataChanged();
-    showToast('success', 'Denomination saved with price and balance.');
+    showToast('success', 'Denomination saved.');
   };
 
   const handleDeleteDenom = async (id: string) => {
@@ -1365,36 +1357,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged,
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {denominations.map(d => (
                     <div key={d.id} className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
                       <div>
                         <span className="text-[9px] font-extrabold text-blue-600 uppercase block">{d.categoryName}</span>
                         <span className="text-lg font-mono font-black text-slate-900">{d.label}</span>
-                        <div className="text-[10px] text-slate-500 font-bold mt-1 space-y-0.5">
-                          <div>Price: <span className="text-slate-900 font-mono font-bold">₹{d.price !== undefined ? d.price : d.value}</span></div>
-                          <div>Balance: <span className="text-emerald-600 font-mono font-bold">₹{d.balance !== undefined ? d.balance : d.value}</span></div>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => {
-                            setEditingDenom(d);
-                            setDenomCategory(d.categoryName || 'GOOGLE PLAY');
-                            setDenomValue(String(d.value));
-                            setDenomPrice(String(d.price !== undefined ? d.price : d.value));
-                            setDenomBalance(String(d.balance !== undefined ? d.balance : d.value));
-                            setShowDenomModal(true);
-                          }}
-                          className="p-1.5 text-slate-600 hover:bg-slate-100 rounded"
-                          title="Edit Denomination"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDeleteDenom(d.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded" title="Delete Denomination">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      <button onClick={() => handleDeleteDenom(d.id)} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -2204,48 +2176,18 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, onDataChanged,
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4">
             <h3 className="font-extrabold text-slate-900">{editingDenom ? 'Edit Denomination' : 'Add Denomination'}</h3>
-            <form onSubmit={handleSaveDenomination} className="space-y-3 text-xs font-semibold">
-              <div>
-                <label className="block text-slate-500 mb-1">Category</label>
-                <select value={denomCategory} onChange={e => setDenomCategory(e.target.value)} className="w-full p-2.5 border rounded-xl">
-                  {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-slate-500 mb-1">Denomination Value (₹)</label>
-                <input
-                  type="number"
-                  placeholder="Denomination Value"
-                  value={denomValue}
-                  onChange={e => setDenomValue(e.target.value)}
-                  className="w-full p-2.5 border rounded-xl font-mono font-bold"
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-slate-500 mb-1">Selling Price (₹)</label>
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={denomPrice}
-                    onChange={e => setDenomPrice(e.target.value)}
-                    className="w-full p-2.5 border rounded-xl font-mono font-bold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-500 mb-1">Redeem Balance (₹)</label>
-                  <input
-                    type="number"
-                    placeholder="Balance"
-                    value={denomBalance}
-                    onChange={e => setDenomBalance(e.target.value)}
-                    className="w-full p-2.5 border rounded-xl font-mono font-bold text-emerald-600"
-                    required
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSaveDenomination} className="space-y-3 text-xs">
+              <select value={denomCategory} onChange={e => setDenomCategory(e.target.value)} className="w-full p-2.5 border rounded-xl">
+                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+              </select>
+              <input
+                type="number"
+                placeholder="Value Amount"
+                value={denomValue}
+                onChange={e => setDenomValue(e.target.value)}
+                className="w-full p-2.5 border rounded-xl font-mono font-bold"
+                required
+              />
               <div className="flex gap-2 pt-2">
                 <button type="button" onClick={() => setShowDenomModal(false)} className="flex-1 py-2.5 bg-slate-100 rounded-xl font-bold">Cancel</button>
                 <button type="submit" className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl">Save</button>

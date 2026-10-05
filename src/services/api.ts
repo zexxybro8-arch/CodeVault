@@ -99,8 +99,8 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
 
     if (stock > 0) {
       const firstCode = availableCodes[0];
-      const prodPrice = denConfig?.price !== undefined ? parseNumeric(denConfig.price) : parseNumeric(firstCode.price, 0);
-      const prodBalance = denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : parseNumeric(firstCode.balance, 0);
+      const prodPrice = parseNumeric(firstCode.price, denConfig?.price !== undefined ? parseNumeric(denConfig.price) : item.denomination);
+      const prodBalance = parseNumeric(firstCode.balance, denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : item.denomination);
 
       products.push({
         id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
@@ -119,7 +119,7 @@ function buildProductsFromDB(denominations: Denomination[], redeemCodes: RedeemC
       });
     } else {
       const outPrice = denConfig?.price !== undefined ? parseNumeric(denConfig.price) : item.denomination;
-      const outBalance = denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : 0;
+      const outBalance = denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : item.denomination;
 
       products.push({
         id: `prod-${item.category.toLowerCase()}-${item.denomination}`,
@@ -161,8 +161,8 @@ function buildUserProductCards(denominations: Denomination[], redeemCodes: Redee
       parseNumeric(d.value) === denom
     );
 
-    const price = denConfig?.price !== undefined ? parseNumeric(denConfig.price) : parseNumeric(c.price, denom);
-    const balance = denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : parseNumeric(c.balance, 0);
+    const price = parseNumeric(c.price, denConfig?.price !== undefined ? parseNumeric(denConfig.price) : denom);
+    const balance = parseNumeric(c.balance, denConfig?.balance !== undefined ? parseNumeric(denConfig.balance) : (price || denom));
     const name = denConfig?.name || 'Google Play Recharge Code';
     const enabled = denConfig ? denConfig.enabled !== false : true;
 
@@ -198,7 +198,7 @@ function buildUserProductCards(denominations: Denomination[], redeemCodes: Redee
 
       if (denVal > 0 && !availableKeys.has(key) && !availablePriceKeys.has(key)) {
         const outPrice = den.price !== undefined ? parseNumeric(den.price) : denVal;
-        const outBalance = den.balance !== undefined ? parseNumeric(den.balance) : 0;
+        const outBalance = den.balance !== undefined ? parseNumeric(den.balance) : denVal;
         const outName = den.name || 'Google Play Recharge Code';
 
         userProducts.push({
@@ -241,10 +241,10 @@ const INITIAL_CATEGORIES: Category[] = [
 ];
 
 const INITIAL_DENOMINATIONS: Denomination[] = [
-  { id: 'den-1', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 120, label: '₹120', price: 120, balance: 1800, name: 'Google Play Recharge Code', enabled: true, displayOrder: 1 },
-  { id: 'den-2', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 150, label: '₹150', price: 150, balance: 2500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 2 },
-  { id: 'den-3', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 200, label: '₹200', price: 200, balance: 3000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 3 },
-  { id: 'den-4', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 300, label: '₹300', price: 300, balance: 4500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 4 },
+  { id: 'den-1', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 120, label: '₹120', price: 120, balance: 120, name: 'Google Play Recharge Code', enabled: true, displayOrder: 1 },
+  { id: 'den-2', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 150, label: '₹150', price: 150, balance: 150, name: 'Google Play Recharge Code', enabled: true, displayOrder: 2 },
+  { id: 'den-3', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 200, label: '₹200', price: 3000, balance: 3000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 3 },
+  { id: 'den-4', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 300, label: '₹300', price: 300, balance: 300, name: 'Google Play Recharge Code', enabled: true, displayOrder: 4 },
   { id: 'den-5', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 350, label: '₹350', price: 6000, balance: 6000, name: 'Google Play Recharge Code', enabled: true, displayOrder: 5 },
   { id: 'den-6', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 500, label: '₹500', price: 450, balance: 500, name: 'Google Play Recharge Code', enabled: true, displayOrder: 6 },
   { id: 'den-7', categoryId: 'cat-1', categoryName: 'GOOGLE PLAY', value: 700, label: '₹700', price: 700, balance: 700, name: 'Google Play Recharge Code', enabled: true, displayOrder: 7 },
@@ -448,68 +448,7 @@ const INITIAL_SETTINGS: MarketplaceSettings = {
   logoUrl: ''
 };
 
-const PROD_BACKEND_ORIGIN = 'https://ais-pre-powksemjz5ebugzwg6nwbu-53259780002.asia-southeast1.run.app';
-
-export function getApiUrl(path: string): string {
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) {
-    return `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}${path}`;
-  }
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // When running in AI Studio Dev Preview environment (ais-dev-...) or local dev,
-    // connect directly to the Live Production Backend (ais-pre-...) so both Preview & Live
-    // read/write the EXACT SAME central database & redeem codes!
-    if (hostname.includes('ais-dev-') || hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${PROD_BACKEND_ORIGIN}${path}`;
-    }
-  }
-  return path;
-}
-
-let serverDbCache: DatabaseSchema | null = null;
-
-async function fetchServerDB(): Promise<DatabaseSchema> {
-  try {
-    const url = getApiUrl('/api/db?t=' + Date.now());
-    const res = await fetch(url, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
-    });
-    if (res.ok) {
-      const serverDb = await res.json();
-      if (serverDb && Array.isArray(serverDb.denominations) && Array.isArray(serverDb.redeemCodes)) {
-        serverDb.products = buildProductsFromDB(serverDb.denominations, serverDb.redeemCodes);
-        serverDbCache = serverDb;
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(serverDb));
-          } catch {}
-        }
-        // Sync active user session's wallet balance from server DB
-        const activeUser = api.getCurrentUser();
-        if (activeUser && Array.isArray(serverDb.users)) {
-          const freshUser = serverDb.users.find((u: any) => u.id === activeUser.id || u.email?.toLowerCase() === activeUser.email?.toLowerCase());
-          if (freshUser && freshUser.walletBalance !== undefined) {
-            activeUser.walletBalance = freshUser.walletBalance;
-            activeUser.totalDeposits = freshUser.totalDeposits;
-            if (typeof window !== 'undefined') {
-              localStorage.setItem(USER_SESSION_KEY, JSON.stringify(activeUser));
-            }
-          }
-        }
-        return serverDb;
-      }
-    }
-  } catch {
-    // Transient network/offline error - safely fall back to local DB cache
-  }
-  return getDB();
-}
-
 function getDB(): DatabaseSchema {
-  if (serverDbCache) {
-    return serverDbCache;
-  }
   try {
     const raw = typeof window !== 'undefined' ? (localStorage.getItem(DB_STORAGE_KEY) || localStorage.getItem('blackx_database_v1')) : null;
     if (raw) {
@@ -559,37 +498,26 @@ function getDB(): DatabaseSchema {
     deposits: INITIAL_DEPOSITS,
     transactions: INITIAL_TRANSACTIONS
   };
+  saveDB(initialData);
   return initialData;
 }
 
-async function saveDB(data: DatabaseSchema): Promise<void> {
+function saveDB(data: DatabaseSchema): void {
   try {
     data.products = buildProductsFromDB(data.denominations, data.redeemCodes);
-    serverDbCache = data;
     if (typeof window !== 'undefined') {
       localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(data));
     }
-    // Sync with backend server only when authorized as admin
+    // Async background sync with backend server
     if (typeof window !== 'undefined') {
-      const adminToken = localStorage.getItem(ADMIN_TOKEN_KEY) || sessionStorage.getItem(ADMIN_TOKEN_KEY);
-      if (adminToken) {
-        const url = getApiUrl('/api/db');
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-admin-token': adminToken
-          },
-          body: JSON.stringify(data)
-        });
-        if (!res.ok) {
-          throw new Error('Failed to persist database changes to backend server.');
-        }
-      }
+      fetch('/api/db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).catch(() => {});
     }
   } catch (err) {
-    console.error('Error saving DB to server/localStorage', err);
-    throw err;
+    console.error('Error saving DB to localStorage', err);
   }
 }
 
@@ -600,7 +528,7 @@ export const api = {
   async signInWithGoogle(payload: { googleId: string; name: string; email: string; profileImage?: string }): Promise<{ success: boolean; user: User; token: string }> {
     try {
       // Try backend first
-      const res = await fetch(getApiUrl('/api/auth/google'), {
+      const res = await fetch('/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -696,7 +624,7 @@ export const api = {
   // ----------------------------------------------------
   async getAllUsers(): Promise<User[]> {
     try {
-      const res = await fetch(getApiUrl('/api/admin/users'));
+      const res = await fetch('/api/admin/users');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.users)) return data.users;
@@ -717,7 +645,7 @@ export const api = {
 
   async adjustUserWallet(userId: string, amount: number, type: 'credit' | 'debit', reason?: string): Promise<{ success: boolean; user?: User }> {
     try {
-      const res = await fetch(getApiUrl(`/api/admin/users/${userId}/adjust-wallet`), {
+      const res = await fetch(`/api/admin/users/${userId}/adjust-wallet`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount, type, reason })
@@ -763,7 +691,7 @@ export const api = {
   // ----------------------------------------------------
   async getWalletData(userId: string): Promise<{ balance: number; transactions: WalletTransaction[]; deposits: DepositRequest[] }> {
     try {
-      const res = await fetch(getApiUrl(`/api/wallet/user/${userId}`));
+      const res = await fetch(`/api/wallet/user/${userId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
@@ -791,7 +719,7 @@ export const api = {
 
   async payWithWallet(userId: string, amount: number, orderId: string, description: string): Promise<{ success: boolean; balance: number }> {
     try {
-      const res = await fetch(getApiUrl('/api/wallet/pay'), {
+      const res = await fetch('/api/wallet/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, amount, orderId, description })
@@ -838,7 +766,7 @@ export const api = {
   // ----------------------------------------------------
   async getDepositAmounts(options?: { forAdmin?: boolean }): Promise<DepositAmount[]> {
     try {
-      const res = await fetch(getApiUrl('/api/deposit-amounts'));
+      const res = await fetch('/api/deposit-amounts');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.amounts)) {
@@ -920,7 +848,7 @@ export const api = {
 
   async createDepositRequest(data: { userId: string; amount: number; depositAmountId?: string; paymentSessionId: string; utrNumber?: string; screenshotUrl?: string }): Promise<DepositRequest> {
     try {
-      const res = await fetch(getApiUrl('/api/deposits/create'), {
+      const res = await fetch('/api/deposits/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -962,7 +890,7 @@ export const api = {
 
   async getDepositRequests(filter?: { status?: DepositStatus; userId?: string }): Promise<DepositRequest[]> {
     try {
-      const res = await fetch(getApiUrl('/api/deposits'));
+      const res = await fetch('/api/deposits');
       if (res.ok) {
         const data = await res.json();
         if (data.success && Array.isArray(data.deposits)) {
@@ -983,7 +911,7 @@ export const api = {
 
   async approveDeposit(depositId: string, approvedBy?: string): Promise<{ success: boolean; deposit: DepositRequest }> {
     try {
-      const res = await fetch(getApiUrl(`/api/deposits/approve/${depositId}`), {
+      const res = await fetch(`/api/deposits/approve/${depositId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approvedBy: approvedBy || 'Admin' })
@@ -1033,7 +961,7 @@ export const api = {
 
   async rejectDeposit(depositId: string, notes?: string): Promise<{ success: boolean; deposit: DepositRequest }> {
     try {
-      const res = await fetch(getApiUrl(`/api/deposits/reject/${depositId}`), {
+      const res = await fetch(`/api/deposits/reject/${depositId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes })
@@ -1079,7 +1007,7 @@ export const api = {
 
   async adminLogin(credentials: { userId?: string; pin?: string; password?: string }): Promise<{ success: boolean; message?: string; token?: string }> {
     try {
-      const res = await fetch(getApiUrl('/api/admin/login'), {
+      const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials)
@@ -1118,27 +1046,11 @@ export const api = {
     }
   },
 
-  async fetchServerDB(): Promise<DatabaseSchema> {
-    return fetchServerDB();
-  },
-
-  async getFreshCurrentUser(): Promise<User | null> {
-    const local = this.getCurrentUser();
-    if (!local) return null;
-    const db = await fetchServerDB();
-    const fresh = (db.users || []).find(u => u.id === local.id || u.email?.toLowerCase() === local.email?.toLowerCase());
-    if (fresh) {
-      this.setCurrentUser(fresh);
-      return fresh;
-    }
-    return local;
-  },
-
   // ----------------------------------------------------
   // Products, Categories, Denominations & Orders
   // ----------------------------------------------------
   async getProducts(options?: { forAdmin?: boolean }): Promise<Product[]> {
-    const db = await fetchServerDB();
+    const db = getDB();
     if (options?.forAdmin) {
       return buildProductsFromDB(db.denominations, db.redeemCodes);
     } else {
@@ -1147,7 +1059,7 @@ export const api = {
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
 
     let targetDenom = db.denominations.find(d =>
       d.id === id ||
@@ -1200,7 +1112,7 @@ export const api = {
       }
     }
 
-    await saveDB(db);
+    saveDB(db);
 
     const freshProducts = buildProductsFromDB(db.denominations, db.redeemCodes);
     const updatedProd = freshProducts.find(p =>
@@ -1212,15 +1124,15 @@ export const api = {
   },
 
   async getCategories(): Promise<Category[]> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const token = this.getAdminToken();
     const isAdmin = token === 'codevault_admin_token_sec_2026';
-    if (isAdmin) return db.categories || [];
-    return (db.categories || []).filter(c => c.enabled !== false);
+    if (isAdmin) return db.categories;
+    return db.categories.filter(c => c.enabled !== false);
   },
 
   async createCategory(cat: Partial<Category>): Promise<Category | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
     if (!cat.name) return null;
     const upper = String(cat.name).toUpperCase().trim();
     if (db.categories.some(c => c.name.toUpperCase() === upper)) {
@@ -1234,33 +1146,33 @@ export const api = {
       displayOrder: cat.displayOrder ? Number(cat.displayOrder) : db.categories.length + 1
     };
     db.categories.push(newCat);
-    await saveDB(db);
+    saveDB(db);
     return newCat;
   },
 
   async updateCategory(id: string, updates: Partial<Category>): Promise<Category | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const idx = db.categories.findIndex(c => c.id === id);
     if (idx === -1) return null;
     db.categories[idx] = { ...db.categories[idx], ...updates };
-    await saveDB(db);
+    saveDB(db);
     return db.categories[idx];
   },
 
   async deleteCategory(id: string): Promise<boolean> {
-    const db = await fetchServerDB();
+    const db = getDB();
     db.categories = db.categories.filter(c => c.id !== id);
-    await saveDB(db);
+    saveDB(db);
     return true;
   },
 
   async getDenominations(): Promise<Denomination[]> {
-    const db = await fetchServerDB();
-    return (db.denominations || []).sort((a, b) => (a.value || 0) - (b.value || 0));
+    const db = getDB();
+    return db.denominations.sort((a, b) => (a.value || 0) - (b.value || 0));
   },
 
   async createDenomination(den: Partial<Denomination>): Promise<Denomination | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const numVal = parseNumeric(den.value);
     if (numVal <= 0) throw new Error('Valid denomination value is required');
     const newDen: Denomination = {
@@ -1276,36 +1188,36 @@ export const api = {
       displayOrder: den.displayOrder ? Number(den.displayOrder) : db.denominations.length + 1
     };
     db.denominations.push(newDen);
-    await saveDB(db);
+    saveDB(db);
     return newDen;
   },
 
   async updateDenomination(id: string, updates: Partial<Denomination>): Promise<Denomination | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const idx = db.denominations.findIndex(d => d.id === id);
     if (idx === -1) return null;
     db.denominations[idx] = { ...db.denominations[idx], ...updates };
-    await saveDB(db);
+    saveDB(db);
     return db.denominations[idx];
   },
 
   async deleteDenomination(id: string): Promise<boolean> {
-    const db = await fetchServerDB();
+    const db = getDB();
     db.denominations = db.denominations.filter(d => d.id !== id);
-    await saveDB(db);
+    saveDB(db);
     return true;
   },
 
   async getRedeemCodes(): Promise<RedeemCodeItem[]> {
-    const db = await fetchServerDB();
-    return db.redeemCodes || [];
+    const db = getDB();
+    return db.redeemCodes;
   },
 
   async createRedeemCode(codeData: Partial<RedeemCodeItem>): Promise<RedeemCodeItem | null> {
     if (!codeData.code || codeData.denomination === undefined) {
       throw new Error('Redeem code and denomination are required');
     }
-    const db = await fetchServerDB();
+    const db = getDB();
     const cleanCode = String(codeData.code).trim().toUpperCase();
     if (db.redeemCodes.some(c => c.code.trim().toUpperCase() === cleanCode)) {
       throw new Error('Duplicate redeem code already exists');
@@ -1328,12 +1240,12 @@ export const api = {
     };
 
     db.redeemCodes.unshift(newCodeItem);
-    await saveDB(db);
+    saveDB(db);
     return newCodeItem;
   },
 
   async updateRedeemCode(id: string, updates: Partial<RedeemCodeItem>): Promise<RedeemCodeItem | null> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const idx = db.redeemCodes.findIndex(c => c.id === id);
     if (idx === -1) {
       throw new Error(`Redeem code with ID "${id}" not found in database.`);
@@ -1358,18 +1270,18 @@ export const api = {
     };
 
     db.redeemCodes[idx] = updatedItem;
-    await saveDB(db);
+    saveDB(db);
     return updatedItem;
   },
 
   async deleteRedeemCode(id: string): Promise<boolean> {
-    const db = await fetchServerDB();
+    const db = getDB();
     const prevCount = db.redeemCodes.length;
     db.redeemCodes = db.redeemCodes.filter(c => c.id !== id);
     if (db.redeemCodes.length === prevCount) {
       throw new Error(`Redeem code with id "${id}" not found.`);
     }
-    await saveDB(db);
+    saveDB(db);
     return true;
   },
 
